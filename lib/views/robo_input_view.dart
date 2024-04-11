@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 //import 'package:time_picker_spinner/time_picker_spinner.dart';
 
 class RoboInputView extends StatefulWidget {
+  const RoboInputView({super.key});
+
   @override
   _RoboInputViewState createState() => _RoboInputViewState();
 }
@@ -35,11 +37,15 @@ class _RoboInputViewState extends State<RoboInputView> {
     }
   }
 
+  void _goNext() {
+    Navigator.pushNamed(context, '/late_payment/robo_input/progress_view');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Job Details"),
+        title: const Text("Job Details"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -47,16 +53,16 @@ class _RoboInputViewState extends State<RoboInputView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
-              decoration: InputDecoration(labelText: "Job Name"),
+              decoration: const InputDecoration(labelText: "Job Name"),
               onChanged: (value) {
                 setState(() {
                   jobName = value;
                 });
               },
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             TextField(
-              decoration: InputDecoration(labelText: "Caller ID"),
+              decoration: const InputDecoration(labelText: "Caller ID"),
               keyboardType: TextInputType.phone,
               onChanged: (value) {
                 setState(() {
@@ -64,26 +70,36 @@ class _RoboInputViewState extends State<RoboInputView> {
                 });
               },
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Text("Start Time: ${startTime.hour}:${startTime.minute}"),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () => _selectTime(context, true),
-                  child: Text("Select Time"),
+                  child: const Text("Select Time"),
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Text("Stop Time: ${stopTime.hour}:${stopTime.minute}"),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () => _selectTime(context, false),
-                  child: Text("Select Time"),
+                  child: const Text("Select Time"),
                 ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Spacer(),
+                ElevatedButton(
+                  onPressed: () => _goNext(),
+                  child: const Text('Next'),
+                )
               ],
             ),
           ],

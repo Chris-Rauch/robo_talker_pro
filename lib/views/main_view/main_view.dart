@@ -5,7 +5,7 @@ import 'package:robo_talker_pro/views/main_view/project_view.dart';
 import 'package:robo_talker_pro/views/main_view/settings_view.dart';
 
 class MainView extends StatefulWidget {
-  const MainView({Key? key}) : super(key: key);
+  const MainView({super.key});
 
   @override
   State<MainView> createState() => _MainViewState();

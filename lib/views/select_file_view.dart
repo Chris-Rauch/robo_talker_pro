@@ -1,3 +1,7 @@
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:excel/excel.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 class SelectFileView extends StatefulWidget {
@@ -14,11 +18,24 @@ class _SelectFileViewState extends State<SelectFileView> {
 
   String displayText = "";
 
-  void selectFile() async {
+  Future<void> selectFile() async {
     // TODO: Implement file selection logic
-    // Example using file_picker package:
-    // File file = await FilePicker.getFile();
-    // Update displayText or perform other actions based on the selected file.
+    // Move this code to a BLoC
+    File? pickedFile = await pickExcelFile();
+    File readFile;
+
+    print(pickedFile.toString());
+
+    // read selected file
+    if (pickedFile != null) {
+      readFile = File(pickedFile.toString());
+      readExcelFile(readFile);
+      print('true');
+    }
+    else {
+      return;
+    }
+    
     setState(() {
       displayText = "File selected!";
     });
@@ -26,9 +43,7 @@ class _SelectFileViewState extends State<SelectFileView> {
 
   void selectFolder() async {
     // TODO: Implement folder selection logic
-    // Example using file_picker package:
-    // Directory folder = await FilePicker.getDirectory();
-    // Update displayText or perform other actions based on the selected folder.
+
     setState(() {
       displayText = "Folder selected!";
     });
@@ -40,7 +55,7 @@ class _SelectFileViewState extends State<SelectFileView> {
 
   void goNext() {
     if (projectType == 'Late Payment') {
-      Navigator.pushNamed(context, '/late_payment/robo_input/progress_view');
+      Navigator.pushNamed(context, '/late_payment/robo_input');
     } else if (projectType == 'Return Mail') {
       Navigator.pushNamed(context, '/return_mail/progress_view');
     } else {
@@ -49,6 +64,35 @@ class _SelectFileViewState extends State<SelectFileView> {
       });
     }
   }
+
+  Future<File?> pickExcelFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['xls', 'xlsx'],
+    );
+
+    if (result != null) {
+      return File(result.files.single.path!);
+    } else {
+      return null;
+    }
+  }
+
+  Future<void> readExcelFile(File file) async {
+    var bytes = await file.readAsBytes();
+    var excel = Excel.decodeBytes(bytes);
+
+    for (var table in excel.tables.keys) {
+        print(table);
+        print(excel.tables[table]!.maxColumns);
+        print(excel.tables[table]!.maxRows);
+
+        for (var row in excel.tables[table]!.rows) {
+            print(row);
+        }
+    }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -64,30 +108,30 @@ class _SelectFileViewState extends State<SelectFileView> {
           children: [
             ElevatedButton(
               onPressed: selectFile,
-              child: Text("Select File"),
+              child: const Text("Select File"),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: selectFolder,
-              child: Text("Select Folder"),
+              child: const Text("Select Folder"),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               displayText,
-              style: TextStyle(fontSize: 18),
+              style: const TextStyle(fontSize: 18),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton(
                   onPressed: goBack,
-                  child: Text("Back"),
+                  child: const Text("Back"),
                 ),
                 ElevatedButton(
                   onPressed: goNext,
-                  child: Text("Next"),
+                  child: const Text("Next"),
                 ),
               ],
             ),

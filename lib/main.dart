@@ -24,16 +24,16 @@ class MyApp extends StatelessWidget {
         '/': (context) => const MainView(),
         '/late_payment': (context) =>
             const SelectFileView(projectType: 'Late Payment'),
-        '/late_payment/robo_input': (context) => RoboInputView(),
+        '/late_payment/robo_input': (context) => const RoboInputView(),
         '/late_payment/robo_input/progress_view': (context) =>
-            ProgressBarView(progressInfo: 'Memo\'ing Accounts'),
+            const ProgressBarView(progressInfo: 'Memo\'ing Accounts'),
         '/return_mail': (context) =>
             const SelectFileView(projectType: 'Return Mail'),
         '/return_mail/progress_view': (context) =>
-            ProgressBarView(progressInfo: 'Gathering Phone Numbers'),
-        '/return_mail/progress_view/robo_input': (context) => RoboInputView(),
+            const ProgressBarView(progressInfo: 'Gathering Phone Numbers'),
+        '/return_mail/progress_view/robo_input': (context) => const RoboInputView(),
         '/return_mail/progress_view/robo_input/progress_view': (context) =>
-            ProgressBarView(progressInfo: 'Memo\'ing Accounts'),
+            const ProgressBarView(progressInfo: 'Memo\'ing Accounts'),
       },
       //home: const MainView(),
     );
