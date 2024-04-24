@@ -18,7 +18,7 @@ void showSnackBarAfterBuild(BuildContext context, Object error) {
         const Duration(seconds: 5), // Duration the SnackBar should be visible
   );
 
-  SchedulerBinding.instance!.addPostFrameCallback((_) {
+  SchedulerBinding.instance.addPostFrameCallback((_) {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   });
 }

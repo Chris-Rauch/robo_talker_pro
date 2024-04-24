@@ -4,7 +4,6 @@
 library io_event_bloc;
 
 import 'package:robo_talker_pro/auxillary/enums.dart';
-import 'package:robo_talker_pro/views/select_file_view.dart';
 
 abstract class FileIoEvent {
   const FileIoEvent();
