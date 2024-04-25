@@ -56,7 +56,7 @@ class _MainViewState extends State<MainView> {
       case 0:
         return const ProjectView();
       case 1:
-        return const AccountView();
+        return AccountView();
       case 2:
         return const NoCallAgreementView();
       case 3:
