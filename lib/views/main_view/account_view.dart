@@ -2,44 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 
 class AccountView extends StatefulWidget {
-  AccountView({super.key});
+  const AccountView({super.key});
 
   @override
   State<StatefulWidget> createState() => _AccountView();
 }
 
 class _AccountView extends State<AccountView> {
+  final _roboUsernameController = TextEditingController();
+  final _roboKeyController = TextEditingController();
+  final _callerID = TextEditingController();
+  final _teUsername = TextEditingController();
+  final _tePword = TextEditingController();
 
-  String? roboUsername;
-  String? roboKey;
-  String? teUsername;
-  String? tePword;
-
-  @override 
+  @override
   void initState() {
     super.initState();
-    /*
-    roboUsername = loadData('roboUsername');
-    roboKey = loadData('roboKey');
-    teUsername = loadData('Third Eye Username');
-    tePword = loadData('Third Eye Password');
-    */
+    loadData('roboUsername').then((value) {
+      _roboUsernameController.text = value ?? '';
+    });
+    loadData('roboKey').then((value) {
+      _roboKeyController.text = value ?? '';
+    });
+    loadData('caller_id').then((value) {
+      _callerID.text = value ?? '';
+    });
+    loadData('Third Eye Username').then((value) {
+      _teUsername.text = value ?? '';
+    });
+    loadData('Third Eye Password').then((value) {
+      _tePword.text = value ?? '';
+    });
   }
 
   _save() {
-    if (roboUsername != null) {
-      saveData('roboUsername', roboUsername!);
-    }
-    if (roboKey != null) {
-      saveData('roboKey', roboKey!);
-    }
-    if (teUsername != null) {
-      saveData('Third Eye Username', teUsername!);
-    }
-    if (tePword != null) {
-      saveData('Third Eye Password', tePword!);
-    }
-    
+    saveData('roboUsername', _roboUsernameController.text);
+    saveData('roboKey', _roboKeyController.text);
+    saveData('caller_id', _callerID.text);
+    saveData('Third Eye Username', _teUsername.text);
+    saveData('Third Eye Password', _tePword.text);
   }
 
   @override
@@ -58,27 +59,22 @@ class _AccountView extends State<AccountView> {
               ),
             ),
             TextField(
-              onChanged: (value) {
-                setState(() {
-                  roboUsername = value;
-                  print('set state');
-                });
-              },
-              decoration: InputDecoration(
-                hintText: roboUsername ?? 'Username',
-                //labelText: roboUsername ?? 'Username',
+              controller: _roboUsernameController,
+              decoration: const InputDecoration(
+                hintText: 'Username',
               ),
             ),
             TextField(
-              onChanged: (value) {
-                setState(() {
-                  roboKey = value;
-                });
-              },
+              controller: _roboKeyController,
               obscureText: true,
-              decoration: InputDecoration(
-                hintText: roboKey ?? 'Z Key',
-                //labelText: roboKey,
+              decoration: const InputDecoration(
+                hintText: 'Z Key',
+              ),
+            ),
+            TextField(
+              controller: _callerID,
+              decoration: const InputDecoration(
+                hintText: 'Caller ID',
               ),
             ),
             const Text(
@@ -88,32 +84,22 @@ class _AccountView extends State<AccountView> {
               ),
             ),
             TextField(
-              onChanged: (value) {
-                setState(() {
-                  teUsername = value;
-                });
-              },
-              decoration: InputDecoration(
-                hintText: teUsername ?? 'Username',
-                //labelText: teUsername,
+              controller: _teUsername,
+              decoration: const InputDecoration(
+                hintText: 'Username',
               ),
             ),
             TextField(
-              onChanged: (value) {
-                setState(() {
-                  tePword = value;
-                });
-              },
+              controller: _tePword,
               obscureText: true,
-              decoration: InputDecoration(
-                hintText: tePword ?? 'Password',
-                //labelText: tePword,
+              decoration: const InputDecoration(
+                hintText: 'Password',
               ),
             ),
             FloatingActionButton(
               onPressed: _save,
               child: const Text('Save'),
-              ),
+            ),
           ],
         ),
       ),

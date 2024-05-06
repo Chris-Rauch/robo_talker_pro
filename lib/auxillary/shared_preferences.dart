@@ -1,24 +1,38 @@
+/// Shared preferences file manages saving and loading JSON data. Possible keys
+/// are: 1. nca_list: [company1, company2...]
+library shared_preferences;
+
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-
 
 // Save data to a file
 Future<void> saveData(String key, dynamic data) async {
   Map<String, dynamic> savedData = {};
   try {
     final directory = await getApplicationSupportDirectory();
-    final file = File('${directory.path}/preferences.json');
+    File file;
+
+    if (Platform.isWindows) {
+      file = File('${directory.path}\\preferences.json');
+    } else if (Platform.isMacOS || Platform.isLinux) {
+      file = File('${directory.path}/preferences.json');
+    } else {
+      throw 'Unknown Operating System';
+    }
 
     // if file does not exist, create one
     if (!file.existsSync()) {
-      file.create();
+      file.createSync(recursive: true);
     }
 
     // fetch data from file
     final jsonData = file.readAsStringSync();
-    savedData = json.decode(jsonData);
+    if (jsonData.isNotEmpty) {
+      savedData = json.decode(jsonData);
+    }
 
     // Update data with new value
     savedData[key] = data;
@@ -26,26 +40,36 @@ Future<void> saveData(String key, dynamic data) async {
     // Write updated data to file
     file.writeAsStringSync(json.encode(savedData));
   } catch (e) {
-    print(e);
+    log('Could not save user preferences', error: e);
   }
 }
 
 // Load data from a file
-Future<String?> loadData(String key) async {
+Future<dynamic> loadData(String key) async {
   try {
     final directory = await getApplicationSupportDirectory();
-    final file = File('${directory.path}/preferences.json');
+    File file;
+
+    if (Platform.isWindows) {
+      file = File('${directory.path}\\preferences.json');
+    } else if (Platform.isMacOS || Platform.isLinux) {
+      file = File('${directory.path}/preferences.json');
+    } else {
+      throw 'Unknown Operating System';
+    }
 
     if (!file.existsSync()) {
       // if the file doesn't exist then create one
-      file.create();
+      file.createSync(recursive: true);
       return null;
     }
 
     //if it does exist get its data
     final jsonData = file.readAsStringSync();
-    final savedData = json.decode(jsonData);
-    return savedData[key] as String;
+    if (jsonData.isNotEmpty) {
+      final savedData = json.decode(jsonData);
+      return savedData[key];
+    }
   } catch (e) {
     print(e);
   }

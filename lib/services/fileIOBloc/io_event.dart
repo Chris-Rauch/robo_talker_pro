@@ -19,9 +19,10 @@ class PickFolderEvent extends FileIoEvent {
 
 class ReadFileEvent extends FileIoEvent {
   final String filePath;
+  final String folderPath;
   final ProjectType projectType;
 
-  const ReadFileEvent(this.filePath, this.projectType);
+  const ReadFileEvent(this.filePath, this.folderPath, this.projectType);
 }
 
 class TriggerErrorEvent extends FileIoEvent {

@@ -25,7 +25,11 @@ class FolderPickedSuccessState extends FileIoState {
   FolderPickedSuccessState(this.folderPath);
 }
 
-class FileReadSuccessState extends FileIoState {}
+class FileReadSuccessState extends FileIoState {
+  FileReadSuccessState(this.contactList, this.followUp);
+  final String contactList;
+  final String followUp;
+}
 
 class FileIoErrorState extends FileIoState {
   final Object error;
