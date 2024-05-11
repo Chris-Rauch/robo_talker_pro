@@ -41,11 +41,12 @@ class FileServices {
           (throw Exception('Cannot access default sheet'));
       Sheet sheet = _latePaymentFile[sheetName];
       for (int x = 2; x < sheet.rows.length; ++x) {
-        //skip the first two lines
         bool createContact = true;
         var row = sheet.rows[x];
         for (var cell in row) {
           int? columnIndex = cell?.columnIndex;
+
+          // find exceptions
           if (columnIndex == 0) {
             //Agent Name
             if (await _noCallAgreement(cell?.value.toString())) {
@@ -66,6 +67,7 @@ class FileServices {
               createContact = false;
               _writeRowToFile(row);
             }
+            //TODO find duplicate numbers
           } else if (columnIndex == 6) {
             //Intent Date
           } else if (columnIndex == 7) {
@@ -76,15 +78,16 @@ class FileServices {
             //idc
           }
         }
+
+        // if no exceptions were found, create the contact
         if (createContact == true) {
-          //TODO Figure out which cells are each var
           contactList.add({
-            'name': row[4]?.value.toString(),
+            'name': row[4]?.value.toString(), //TODO remove special chars
             'phone': row[5]?.value.toString(),
-            'var1': '',
-            'var2': '',
-            'var3': '',
-            'var4': '',
+            'var1': row[0]?.value.toString(), //TODO remove special chars
+            'var2': row[8]?.value.toString(), //payment amount
+            'var3': row[6]?.value.toString(), //due date
+            'var4': _addSpaces(row[3]?.value.toString()), //contract number
           });
         }
       }
@@ -92,10 +95,12 @@ class FileServices {
     } catch (e) {
       if (e == PathAccessException) {
         //file is open. Close it and try again.
+      } else if (e == RangeError) {
+        //TODO implement error handling
       }
       log('Error in function handleLatePayments', error: e);
+      return '';
     }
-    return '';
   }
 
   /// Checks to see if argument 'company' is in the No Call Agreement list
@@ -120,6 +125,48 @@ class FileServices {
     } else {
       return false;
     }
+  }
+
+  ///Checks the contactList to see if the phone number is already on file. If a
+  ///duplicate number is found, it will compare insured names to determine if
+  ///the two rows are really the same person with different contract numbers.
+  ///If they're the same the contract number and amount due will be merged into
+  ///one contact. Otherwise, they'll both be removed from the
+  ///model and placed into the followUp model
+  String? _findDuplicateNumbers(
+      String? number, List<Map<String, dynamic>> contactList) {
+    if (number == null) {
+      return null;
+    }
+
+    final jsonString = json.encode(contactList);
+    if (jsonString.contains(number)) {
+      //find out if it's the same contract
+      //if it is, add the total amounts together
+      //if not, remove from contactList and write to 'report' file
+    }
+    return '';
+  }
+
+  /// Returns the argument but with spaces.
+  /// Due to how robotalker.com reads numbers out loud to the user, it's
+  /// neccessary to add spaces to the contract numbers.
+  String _addSpaces(String? contractNumber) {
+    String newString = '';
+    if (contractNumber == null) {
+      return '';
+    }
+
+    //add spaces
+    for (int x = 0; x < contractNumber.length; ++x) {
+      newString += '${contractNumber[x]} ';
+    }
+
+    //pop last char, which should be an extra space
+    if (newString.isNotEmpty) {
+      newString = newString.substring(0, newString.length - 1);
+    }
+    return newString;
   }
 
   /// Appends argument 'row' to _reportFile
