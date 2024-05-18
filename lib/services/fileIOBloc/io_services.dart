@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'package:excel/excel.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 
@@ -14,12 +15,12 @@ class FileServices {
   final Excel _latePaymentFile;
   final Excel _reportFile;
   final String _reportFileLocation;
-  static const String _reportName = 'report.xlsx';
+  static const String _reportFileName = 'report.xlsx';
 
   FileServices(String filePath, String folderPath)
       : _latePaymentFile = Excel.decodeBytes(File(filePath).readAsBytesSync()),
         _reportFile = Excel.createExcel(),
-        _reportFileLocation = p.join(folderPath, _reportName) {
+        _reportFileLocation = p.join(folderPath, _reportFileName) {
     // make sure the file exists
     if (!File(filePath).existsSync()) {
       throw ArgumentError('File does not exist: $filePath');
@@ -35,59 +36,56 @@ class FileServices {
   /// _reportFile located in 'folderPath.'
   Future<String> handleLatePayment() async {
     List<Map<String, dynamic>> contactList = [];
-    String contacts = '';
     try {
       String sheetName = _latePaymentFile.getDefaultSheet() ??
           (throw Exception('Cannot access default sheet'));
       Sheet sheet = _latePaymentFile[sheetName];
+
       for (int x = 2; x < sheet.rows.length; ++x) {
         bool createContact = true;
         var row = sheet.rows[x];
+        innerLoop:
         for (var cell in row) {
           int? columnIndex = cell?.columnIndex;
-
-          // find exceptions
+          //Find exceptions. Will only occur with agent name or phone number
+          //Agent Name
           if (columnIndex == 0) {
-            //Agent Name
             if (await _noCallAgreement(cell?.value.toString())) {
               createContact = false;
               _writeRowToFile(row);
+              break innerLoop;
+            } else {
+              createContact == true;
             }
-          } else if (columnIndex == 1) {
-            //Agent Code
-          } else if (columnIndex == 2) {
-            //Group Type
-          } else if (columnIndex == 3) {
-            //Contract #
-          } else if (columnIndex == 4) {
-            //Insured
-          } else if (columnIndex == 5) {
-            //phone number
+          }
+          //phone number
+          else if (columnIndex == 5) {
+            //check for no number
             if (_noNumber(cell?.value.toString())) {
               createContact = false;
               _writeRowToFile(row);
+              break innerLoop;
             }
-            //TODO find duplicate numbers
-          } else if (columnIndex == 6) {
-            //Intent Date
-          } else if (columnIndex == 7) {
-            //Cancel Date
-          } else if (columnIndex == 8) {
-            //Amount Due
-          } else {
-            //idc
+            //check for duplicate number
+            else if (_isDuplicate(row, contactList)) {
+              createContact = false;
+              break innerLoop;
+            } else {
+              createContact == true;
+            }
           }
-        }
+        } //end exception finding
 
         // if no exceptions were found, create the contact
         if (createContact == true) {
           contactList.add({
-            'name': row[4]?.value.toString(), //TODO remove special chars
-            'phone': row[5]?.value.toString(),
-            'var1': row[0]?.value.toString(), //TODO remove special chars
-            'var2': row[8]?.value.toString(), //payment amount
-            'var3': row[6]?.value.toString(), //due date
+            'name': _formatName(row[4]?.value.toString()), //insured name
+            'phone': row[5]?.value.toString(), //phone number
+            'var1': _formatName(row[0]?.value.toString()), //agent name
+            'var2': _formatDollar(row[8]?.value.toString()), //payment amount
+            'var3': _formatDate(row[6]?.value.toString()), //due date
             'var4': _addSpaces(row[3]?.value.toString()), //contract number
+            'groupname': 'LP May6 thru May10',
           });
         }
       }
@@ -101,6 +99,22 @@ class FileServices {
       log('Error in function handleLatePayments', error: e);
       return '';
     }
+  }
+
+  String _formatDollar(String? dollar) {
+    if (dollar == null) {
+      return '';
+    }
+    return dollar.replaceAll('\$', '');
+  }
+
+  //2024-04-26T00:00:00.000Z
+  String _formatDate(String? date) {
+    if (date == null) {
+      return ''; //TODO fix null checks
+    }
+    DateTime time = DateTime.parse(date);
+    return DateFormat('MMM d').format(time);
   }
 
   /// Checks to see if argument 'company' is in the No Call Agreement list
@@ -127,25 +141,95 @@ class FileServices {
     }
   }
 
-  ///Checks the contactList to see if the phone number is already on file. If a
-  ///duplicate number is found, it will compare insured names to determine if
-  ///the two rows are really the same person with different contract numbers.
-  ///If they're the same the contract number and amount due will be merged into
-  ///one contact. Otherwise, they'll both be removed from the
-  ///model and placed into the followUp model
-  String? _findDuplicateNumbers(
-      String? number, List<Map<String, dynamic>> contactList) {
-    if (number == null) {
-      return null;
+  ///Returns true if there if number is already in contact list. This function
+  ///will also determine if any matching phone numbers are under the same
+  ///insured. If the insured names match then the contact is merged in one.
+  ///Otherwise, both are written to file.
+  bool _isDuplicate(List<Data?> row, List<Map<String, dynamic>> contactList) {
+    //if (row.contains(null)) {
+    //throw Exception('Error in _isDuplicate');
+    //} CODE CAUSES EXCEPTION TO THROWN EVERY TIME
+
+    try {
+      for (var contact in contactList) {
+        String number = row[5]!.value.toString();
+        if (contact['phone'] == number) {
+          String name = _formatName(row[4]!.value.toString());
+          String contract = _formatName(row[3]!.value.toString());
+          String intentDate = row[6]!.value.toString();
+          String paymentAmt = row[8]!.value.toString();
+          if (_areSimilar(contact['name'], name)) {
+            //If the number was found and they are the same insured, merge
+            contactList.remove(contact);
+            contactList.add({
+              'name': contact['name'],
+              'phone': contact['phone'],
+              'var1':
+                  contact['var1'], //TODO what if they have different agents?
+              'var2': _addPayments(paymentAmt, contact['var2']),
+              'var3': _chooseSooner(intentDate, contact['var3']),
+              'var4': '${contact['var4']} and ${_addSpaces(contract)}',
+              'groupname': 'LP May6 thru May10',
+            });
+            return true;
+          } else {
+            _writeContactToFile(contact['phone']);
+          }
+          return true;
+        }
+      }
+    } catch (e) {
+      print('$e in function _isDuplicate');
+    }
+    return false;
+  }
+
+  ///Expects inputs in the following format: 4/22/2024
+  String _chooseSooner(String date1, String date2) {
+    List<String> x = [
+      date1.substring(0, 4),
+      date1.substring(5, 7),
+      date1.substring(8, 10)
+    ];
+    List<String> y = [
+      date2.substring(0, 4),
+      date2.substring(5, 7),
+      date2.substring(8, 10)
+    ];
+
+    //compare years
+    try {
+      if (int.parse(x[2]) < int.parse(y[2])) {
+        return date1;
+      } else if (int.parse(x[2]) > int.parse(y[2])) {
+        return date2;
+      }
+
+      //compare months
+      if (int.parse(x[0]) < int.parse(y[0])) {
+        return date1;
+      } else if (int.parse(x[0]) > int.parse(y[0])) {
+        return date2;
+      }
+
+      //compare dates
+      if (int.parse(x[1]) < int.parse(y[1])) {
+        return date1;
+      } else if (int.parse(x[1]) > int.parse(y[1])) {
+        return date2;
+      }
+    } catch (e) {
+      print('$e in function _chooseSooner');
     }
 
-    final jsonString = json.encode(contactList);
-    if (jsonString.contains(number)) {
-      //find out if it's the same contract
-      //if it is, add the total amounts together
-      //if not, remove from contactList and write to 'report' file
-    }
-    return '';
+    return date1;
+  }
+
+  ///Adds the two arguments
+  String _addPayments(String amount1, String amount2) {
+    double x = double.parse(amount1);
+    double y = double.parse(amount2);
+    return ((x + y).toString());
   }
 
   /// Returns the argument but with spaces.
@@ -192,4 +276,113 @@ class FileServices {
       file.writeAsBytesSync(_reportFile.encode()!);
     }
   }
+
+  /// Searches _file for any contacts that match number. It then writes that
+  /// entire row to _reportFile
+  void _writeContactToFile(String number) {
+    try {
+      //open _latePaymentFile
+      String latePaymentSheet = _latePaymentFile.getDefaultSheet() ??
+          (throw Exception('Cannot access default sheet'));
+      Sheet sheet = _latePaymentFile[latePaymentSheet];
+
+      for (var row in sheet.rows) {
+        for (var cell in row) {
+          if (cell?.value.toString() == number) {
+            _writeRowToFile(row);
+          }
+        }
+      }
+    } catch (e) {
+      log('In function _writeContactToFile:', error: e);
+    }
+  }
+
+  /// Replaces any & symbols with the word 'AND' and removes apostrophes
+  String _formatName(String? name) {
+    if (name == null) {
+      return '';
+    }
+    String formattedString = name.replaceAll('&', ' AND ');
+    formattedString = formattedString.replaceAll('\'', '');
+    return formattedString;
+  }
+
+  ///Determines if two strings are similar enough to be be the same person.
+  ///Checks substrings, matching words and levenshtein's distance.
+  bool _areSimilar(String lhs, String rhs) {
+    try {
+      //find bigger string
+      String big, small;
+      if (lhs.length < rhs.length) {
+        big = rhs;
+        small = lhs;
+      } else {
+        big = lhs;
+        small = rhs;
+      }
+
+      //check if either one are substrings of the other
+      if ((lhs == rhs) || big.contains(small)) {
+        return true;
+      }
+
+      //check percentage of shared words
+      List<String> list1 = big.split(' ');
+      List<String> list2 = small.split(' ');
+      double match = 0;
+      for (int i = 0; i < list2.length; ++i) {
+        for (int j = 0; j < list1.length; ++j) {
+          if (list2[i].toLowerCase() == list1[j].toLowerCase()) {
+            ++match;
+          }
+        }
+      }
+      if ((match / list2.length) > 0.50) {
+        return true;
+      }
+
+      //levenshteins distance
+      int t, track;
+      List<List<int>> dist = List<List<int>>.generate(
+        256,
+        (i) => List<int>.generate(256, (int index) => 0, growable: false),
+        growable: false,
+      );
+
+      int l1 = big.length;
+      int l2 = small.length;
+
+      for (int i = 0; i <= l1; ++i) {
+        dist[0][i] = i;
+      }
+      for (int j = 0; j <= l2; ++j) {
+        dist[j][0] = j;
+      }
+      for (int j = 1; j <= l1; ++j) {
+        for (int i = 1; i <= l2; ++i) {
+          if ((j < l2) && big[i - 1] == small[j - 1]) {
+            track = 0;
+          } else {
+            track = 1;
+          }
+          t = MIN((dist[i - 1][j] + 1), (dist[i][j - 1] + 1));
+          dist[i][j] = MIN(t, (dist[i - 1][j - 1] + track));
+        }
+      }
+
+      int lDist = dist[l2][l1];
+      double percent = ((big.length - lDist) / big.length);
+      if (percent > 0.50) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      print('$e in function _areSimilar');
+      return false;
+    }
+  }
+
+  int MIN(int x, int y) => ((x) < (y) ? (x) : (y));
 }

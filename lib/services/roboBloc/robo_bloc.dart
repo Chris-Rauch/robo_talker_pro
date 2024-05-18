@@ -17,6 +17,7 @@ class RoboBloc extends Bloc<RoboEvent, RoboState> {
       emit(RoboGoodInputState());
     });
 
+    ///This event triggers a REST post to robotalker.com
     on<RoboMultiJobEvent>((event, emit) async {
       emit(RoboLoadingState());
       // make REST API post

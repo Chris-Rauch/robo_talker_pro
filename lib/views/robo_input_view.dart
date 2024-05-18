@@ -1,5 +1,4 @@
 //import 'dart:js_interop';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:robo_talker_pro/auxillary/error_popup.dart';
@@ -7,7 +6,7 @@ import 'package:robo_talker_pro/services/roboBloc/robo_bloc.dart';
 import 'package:robo_talker_pro/services/roboBloc/robo_event.dart';
 import 'package:robo_talker_pro/services/roboBloc/robo_state.dart';
 import 'package:robo_talker_pro/views/progress_view.dart';
-
+import 'package:intl/intl.dart';
 import '../auxillary/button_styles.dart';
 //import 'package:time_picker_spinner/time_picker_spinner.dart';
 
@@ -23,26 +22,45 @@ class _RoboInputViewState extends State<RoboInputView> {
   bool _goodInput = false;
   TimeOfDay startTime = TimeOfDay.now();
   TimeOfDay stopTime = TimeOfDay.now();
+  DateTime startDate = DateTime.now();
+  DateTime stopDate = DateTime.now();
+  DateTime startDateTime = DateTime.now();
+  DateTime stopDateTime = DateTime.now();
 
-  Future<void> _selectTime(BuildContext context, bool isStartTime) async {
-    TimeOfDay? picked = await showTimePicker(
+  Future<void> _selectDateTime(BuildContext context, bool isStartTime) async {
+    DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialTime: startTime,
+      initialDate: isStartTime ? startDate : stopDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
     );
-    if (picked != null) {
-      picked = TimeOfDay(
-        hour: picked.hour,
-        minute: (picked.minute / 15).round() * 15,
+    if (pickedDate != null) {
+      TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: isStartTime ? startTime : stopTime,
       );
-    }
-    if (picked != null) {
-      setState(() {
-        if (isStartTime) {
-          startTime = picked!;
-        } else {
-          stopTime = picked!;
-        }
-      });
+      if (pickedTime != null) {
+        DateTime selectedDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          (pickedTime.minute / 15).round() * 15,
+        );
+        setState(() {
+          if (isStartTime) {
+            startTime = pickedTime;
+            startDate = pickedDate;
+            // Use selectedDateTime for the combined date and time
+            startDateTime = selectedDateTime;
+          } else {
+            stopTime = pickedTime;
+            stopDate = pickedDate;
+            // Use selectedDateTime for the combined date and time
+            stopDateTime = selectedDateTime;
+          }
+        });
+      }
     }
   }
 
@@ -94,10 +112,11 @@ class _RoboInputViewState extends State<RoboInputView> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Text("Start Time: ${startTime.hour}:${startTime.minute}"),
+                Text(
+                    "Start Time: ${DateFormat('yyyy-MM-dd HH:mm').format(startDateTime)}"), // Display selected date and time for start time
                 const SizedBox(width: 32),
                 ElevatedButton(
-                  onPressed: () => _selectTime(context, true),
+                  onPressed: () => _selectDateTime(context, true),
                   child: const Text("Select Time"),
                 ),
               ],
@@ -105,10 +124,11 @@ class _RoboInputViewState extends State<RoboInputView> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Text("Stop Time: ${stopTime.hour}:${stopTime.minute}"),
+                Text(
+                    "Stop Time: ${DateFormat('yyyy-MM-dd HH:mm').format(stopDateTime)}"), // Display selected date and time for stop time
                 const SizedBox(width: 32),
                 ElevatedButton(
-                  onPressed: () => _selectTime(context, false),
+                  onPressed: () => _selectDateTime(context, false),
                   child: const Text("Select Time"),
                 ),
               ],
