@@ -2,9 +2,12 @@ abstract class RoboEvent {}
 
 class RoboSubmittedJobNameEvent extends RoboEvent {}
 
-class RoboMultiJobEvent extends RoboEvent {}
+class RoboMultiJobEvent extends RoboEvent {
+  final String folderPath;
+  RoboMultiJobEvent(this.folderPath);
+}
 
 class RoboErrorEvent extends RoboEvent {
-  RoboErrorEvent(this.error);
   final Object error;
+  RoboErrorEvent(this.error);
 }

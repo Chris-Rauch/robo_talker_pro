@@ -1,27 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/error_popup.dart';
-import 'package:robo_talker_pro/services/fileIOBloc/io_bloc.dart';
-import 'package:robo_talker_pro/services/fileIOBloc/io_event.dart';
-import 'package:robo_talker_pro/services/fileIOBloc/io_state.dart';
+import 'package:robo_talker_pro/services/fileBloc/file_bloc.dart';
+import 'package:robo_talker_pro/services/fileBloc/file_event.dart';
+import 'package:robo_talker_pro/services/fileBloc/file_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:robo_talker_pro/views/robo_input_view.dart';
-
 import '../auxillary/button_styles.dart';
 
-class SelectFileView extends StatefulWidget {
+class FileView extends StatefulWidget {
   final ProjectType projectType;
-  const SelectFileView({super.key, required this.projectType});
+  const FileView({super.key, required this.projectType});
 
   @override
-  _SelectFileViewState createState() => _SelectFileViewState();
+  FileViewState createState() => FileViewState();
 }
 
-class _SelectFileViewState extends State<SelectFileView> {
+class FileViewState extends State<FileView> {
   late final ProjectType _projectType;
   String _filePath = "";
   String _folderPath = "";
-  bool _goodInput = false;
 
   @override
   void initState() {
@@ -35,12 +33,12 @@ class _SelectFileViewState extends State<SelectFileView> {
 
   void _goNext() {
     context
-        .read<FileIoBloc>()
+        .read<FileBloc>()
         .add(ReadFileEvent(_filePath, _folderPath, _projectType));
     if (_projectType == ProjectType.latePayment) {
-      Navigator.pushNamed(context, '/late_payment/robo_input');
+      //Navigator.pushNamed(context, '/late_payment/robo_input');
     } else if (_projectType == ProjectType.returnMail) {
-      Navigator.pushNamed(context, '/return_mail/progress_view');
+      //Navigator.pushNamed(context, '/return_mail/progress_view');
     } else {
       setState(() {
         _filePath = 'Something went wrong';
@@ -50,15 +48,15 @@ class _SelectFileViewState extends State<SelectFileView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<FileIoBloc, FileIoState>(
+    return BlocBuilder<FileBloc, FileState>(
       builder: (context, state) {
         return _buildUI(context, state);
       },
     );
   }
 
-  Widget _buildUI(BuildContext context, FileIoState state) {
-    if (state is FileIoLoadingState) {
+  Widget _buildUI(BuildContext context, FileState state) {
+    if (state is FileLoadingState) {
       return _buildLoadingUI();
     } else if (state is FileInitialState) {
       _filePath = '';
@@ -72,7 +70,7 @@ class _SelectFileViewState extends State<SelectFileView> {
       return _buildSelectFileUI();
     } else if (state is FileReadSuccessState) {
       return const RoboInputView();
-    } else if (state is FileIoErrorState) {
+    } else if (state is FileErrorState) {
       showSnackBarAfterBuild(context, state.error);
       return _buildSelectFileUI();
     } else {
@@ -98,7 +96,7 @@ class _SelectFileViewState extends State<SelectFileView> {
           children: [
             ElevatedButton(
               onPressed: () =>
-                  context.read<FileIoBloc>().add(const PickFileEvent()),
+                  context.read<FileBloc>().add(const PickFileEvent()),
               child: const Text("Select File"),
             ),
             const SizedBox(height: 16),
@@ -109,7 +107,7 @@ class _SelectFileViewState extends State<SelectFileView> {
             ),
             ElevatedButton(
               onPressed: () =>
-                  context.read<FileIoBloc>().add(const PickFolderEvent()),
+                  context.read<FileBloc>().add(const PickFolderEvent()),
               child: const Text("Select Folder"),
             ),
             const SizedBox(height: 16),
@@ -133,7 +131,7 @@ class _SelectFileViewState extends State<SelectFileView> {
                   onPressed: () =>
                       (_filePath.isNotEmpty && _folderPath.isNotEmpty)
                           ? _goNext()
-                          : null,
+                          : null, //TODO change to null when done with testing
                   child: const Text('Next'),
                 ),
               ],

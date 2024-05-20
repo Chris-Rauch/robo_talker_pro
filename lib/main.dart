@@ -1,22 +1,19 @@
-//import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
-import 'package:robo_talker_pro/services/fileIOBloc/io_bloc.dart';
+import 'package:robo_talker_pro/services/fileBloc/file_bloc.dart';
 import 'package:robo_talker_pro/services/roboBloc/robo_bloc.dart';
-import 'package:robo_talker_pro/services/roboBloc/robo_event.dart';
 import 'package:robo_talker_pro/views/main_view/main_view.dart';
 import 'package:robo_talker_pro/views/progress_view.dart';
 import 'package:robo_talker_pro/views/robo_input_view.dart';
-import 'package:robo_talker_pro/views/select_file_view.dart';
+import 'package:robo_talker_pro/views/file_view.dart';
 
 void main() {
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider<FileIoBloc>(
-          create: (context) => FileIoBloc(),
+        BlocProvider<FileBloc>(
+          create: (context) => FileBloc(),
         ),
         BlocProvider<RoboBloc>(
           create: (context) => RoboBloc(),
@@ -43,12 +40,12 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const MainView(),
         '/late_payment': (context) =>
-            const SelectFileView(projectType: ProjectType.latePayment),
+            const FileView(projectType: ProjectType.latePayment),
         '/late_payment/robo_input': (context) => const RoboInputView(),
         '/late_payment/robo_input/progress_view': (context) =>
             const ProgressBarView(),
         '/return_mail': (context) =>
-            const SelectFileView(projectType: ProjectType.returnMail),
+            const FileView(projectType: ProjectType.returnMail),
         '/return_mail/progress_view': (context) => const ProgressBarView(),
         '/return_mail/progress_view/robo_input': (context) =>
             const RoboInputView(),

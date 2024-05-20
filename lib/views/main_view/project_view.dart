@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:robo_talker_pro/services/fileBloc/file_bloc.dart';
+import 'package:robo_talker_pro/services/fileBloc/file_event.dart';
 
 class ProjectView extends StatelessWidget {
   const ProjectView({super.key});
@@ -30,5 +33,6 @@ class ProjectView extends StatelessWidget {
 
   void _startProject(BuildContext context, String projectType) {
     Navigator.pushNamed(context, projectType);
+    context.read<FileBloc>().add(const SelectFileViewEvent());
   }
 }

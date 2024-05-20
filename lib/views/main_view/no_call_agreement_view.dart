@@ -9,10 +9,10 @@ class NoCallAgreementView extends StatefulWidget {
   const NoCallAgreementView({super.key});
 
   @override
-  State<NoCallAgreementView> createState() => _NoCallAgreementViewState();
+  NoCallAgreementViewState createState() => NoCallAgreementViewState();
 }
 
-class _NoCallAgreementViewState extends State<NoCallAgreementView> {
+class NoCallAgreementViewState extends State<NoCallAgreementView> {
   final TextEditingController controller = TextEditingController();
   List<dynamic> items = [];
   int selectedIndex = -1;

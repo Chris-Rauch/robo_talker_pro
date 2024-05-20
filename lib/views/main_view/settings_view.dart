@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SettingsView extends StatelessWidget {
-  const SettingsView({Key? key}) : super(key: key);
+  const SettingsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class SettingsView extends StatelessWidget {
                 onPressed: () {
                   // Implement check for updates
                 },
-                child: Text("Check for Updates"),
+                child: const Text("Check for Updates"),
               ),
             ],
           ),
@@ -89,7 +89,7 @@ class SettingsView extends StatelessWidget {
             onPressed: () {
               // Implement update action for the specific item
             },
-            child: Text("Update"),
+            child: const Text("Update"),
           ),
         ],
       ),

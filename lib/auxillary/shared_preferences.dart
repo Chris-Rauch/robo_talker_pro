@@ -9,10 +9,15 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 // Save data to a file
-Future<void> saveData(String key, dynamic data) async {
+Future<void> saveData(String key, dynamic data, {String? path}) async {
   Map<String, dynamic> savedData = {};
+  Directory directory;
   try {
-    final directory = await getApplicationSupportDirectory();
+    if (path == null) {
+      directory = await getApplicationSupportDirectory();
+    } else {
+      directory = Directory(path);
+    }
     File file;
 
     if (Platform.isWindows) {
@@ -45,9 +50,14 @@ Future<void> saveData(String key, dynamic data) async {
 }
 
 // Load data from a file
-Future<dynamic> loadData(String key) async {
+Future<dynamic> loadData(String key, {Directory? dir}) async {
   try {
-    final directory = await getApplicationSupportDirectory();
+    Directory directory;
+    if (dir == null) {
+      directory = await getApplicationSupportDirectory();
+    } else {
+      directory = dir;
+    }
     File file;
 
     if (Platform.isWindows) {

@@ -9,115 +9,109 @@ import 'dart:io';
 import 'package:excel/excel.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
+import 'package:robo_talker_pro/auxillary/constants.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 
 class FileServices {
   final Excel _latePaymentFile;
   final Excel _reportFile;
   final String _reportFileLocation;
-  static const String _reportFileName = 'report.xlsx';
 
   FileServices(String filePath, String folderPath)
       : _latePaymentFile = Excel.decodeBytes(File(filePath).readAsBytesSync()),
         _reportFile = Excel.createExcel(),
-        _reportFileLocation = p.join(folderPath, _reportFileName) {
-    // make sure the file exists
+        _reportFileLocation = p.join(folderPath, REPORT_FILE_NAME) {
+    //look for input errors
     if (!File(filePath).existsSync()) {
-      throw ArgumentError('File does not exist: $filePath');
+      throw ArgumentError('This file doesn\'t exist. Was it moved? -> $filePath');
     }
-    //make sure the file has the correct extension
-    if (p.extension(filePath) != '.xlsx') {
+    else if (p.extension(filePath) == '.xls') {
       throw ArgumentError(
-          'Invalid File Type. Make sure the file extension is .XLSX');
+          'Excel file outdate. Make sure the file extension is .xlsx (Excel 2007 or newer)');
+    }
+    else if (p.extension(filePath) != '.xlsx') {
+      throw ArgumentError(
+          'Invalid File Type. Make sure the file extension is .xlsx');
     }
   }
 
-  /// Returns a list of 'contacts' in json format. Moves all exceptions to the
-  /// _reportFile located in 'folderPath.'
+  /// Returns a list of 'contacts' in json format. This is used for REST post.
+  /// Removes contacts that are on the No Call Agreement and bad numbers to
+  /// a report file located in 'folderPath.'
   Future<String> handleLatePayment() async {
     List<Map<String, dynamic>> contactList = [];
-    try {
-      String sheetName = _latePaymentFile.getDefaultSheet() ??
-          (throw Exception('Cannot access default sheet'));
-      Sheet sheet = _latePaymentFile[sheetName];
+    String sheetName = _latePaymentFile.getDefaultSheet() ??
+        (throw Exception('Cannot access default sheet'));
+    Sheet sheet = _latePaymentFile[sheetName];
 
-      for (int x = 2; x < sheet.rows.length; ++x) {
-        bool createContact = true;
-        var row = sheet.rows[x];
-        innerLoop:
-        for (var cell in row) {
-          int? columnIndex = cell?.columnIndex;
-          //Find exceptions. Will only occur with agent name or phone number
-          //Agent Name
-          if (columnIndex == 0) {
-            if (await _noCallAgreement(cell?.value.toString())) {
-              createContact = false;
-              _writeRowToFile(row);
-              break innerLoop;
-            } else {
-              createContact == true;
-            }
+    //traverse excel file looking for NCA's and bad phone #'s
+    for (int x = 2; x < sheet.rows.length; ++x) {
+      bool createContact = true;
+      var row = sheet.rows[x];
+      innerLoop:
+      for (var cell in row) {
+        int? columnIndex = cell?.columnIndex;
+        //Agent Name
+        if (columnIndex == 0) {
+          if (await _noCallAgreement(cell?.value.toString())) {
+            createContact = false;
+            _writeRowToFile(row);
+            break innerLoop;
+          } else {
+            createContact == true;
           }
-          //phone number
-          else if (columnIndex == 5) {
-            //check for no number
-            if (_noNumber(cell?.value.toString())) {
-              createContact = false;
-              _writeRowToFile(row);
-              break innerLoop;
-            }
-            //check for duplicate number
-            else if (_isDuplicate(row, contactList)) {
-              createContact = false;
-              break innerLoop;
-            } else {
-              createContact == true;
-            }
+        }
+        //Phone number
+        else if (columnIndex == 5) {
+          if (_noNumber(cell?.value.toString())) {
+            createContact = false;
+            _writeRowToFile(row);
+            break innerLoop;
+          } else if (_isDuplicate(row, contactList)) {
+            createContact = false;
+            break innerLoop;
+          } else {
+            createContact == true;
           }
-        } //end exception finding
-
-        // if no exceptions were found, create the contact
-        if (createContact == true) {
-          contactList.add({
-            'name': _formatName(row[4]?.value.toString()), //insured name
-            'phone': row[5]?.value.toString(), //phone number
-            'var1': _formatName(row[0]?.value.toString()), //agent name
-            'var2': _formatDollar(row[8]?.value.toString()), //payment amount
-            'var3': _formatDate(row[6]?.value.toString()), //due date
-            'var4': _addSpaces(row[3]?.value.toString()), //contract number
-            'groupname': 'LP May6 thru May10',
-          });
         }
       }
-      return json.encode(contactList);
-    } catch (e) {
-      if (e == PathAccessException) {
-        //file is open. Close it and try again.
-      } else if (e == RangeError) {
-        //TODO implement error handling
+
+      // if no exceptions were found, create the contact
+      if (createContact == true) {
+        contactList.add({
+          'name': _formatName(row[4]?.value.toString()), //insured name
+          'phone': row[5]?.value.toString(), //phone number
+          'var1': _formatName(row[0]?.value.toString()), //agent name
+          'var2': _removeDollar(row[8]?.value.toString()), //payment amount
+          'var3': _formatDate(row[6]?.value.toString()), //due date
+          'var4': _addSpaces(row[3]?.value.toString()), //contract number
+          //'groupname': 'LP May6 thru May10',
+        });
       }
-      log('Error in function handleLatePayments', error: e);
-      return '';
     }
+    return json.encode(contactList);
   }
 
-  String _formatDollar(String? dollar) {
+  ///Remove dollar signs. This is because of how robotalker.com reads them.
+  String _removeDollar(String? dollar) {
     if (dollar == null) {
-      return '';
+      throw Exception('Null value found but not expected in _removeDollar');
+    } else {
+      return dollar.replaceAll('\$', '');
     }
-    return dollar.replaceAll('\$', '');
   }
 
-  //2024-04-26T00:00:00.000Z
+  ///Format dates for the REST robotalker.
+  ///[2024-04-26T00:00:00.000Z] -> [April 26]
   String _formatDate(String? date) {
     if (date == null) {
-      return ''; //TODO fix null checks
+      throw Exception('Null value found but not expected in _formatDate');
     }
     DateTime time = DateTime.parse(date);
     return DateFormat('MMM d').format(time);
   }
 
-  /// Checks to see if argument 'company' is in the No Call Agreement list
+  /// Checks if the company is in the No Call Agreement list.
   Future<bool> _noCallAgreement(String? company) async {
     List<dynamic> nca = await loadData('nca_list');
     for (var x in nca) {
@@ -128,59 +122,59 @@ class FileServices {
     return false;
   }
 
-  ///Returns true if the argument 'number' is all zero's
+  ///Returns true if the argument is all zero's.
   bool _noNumber(String? number) {
-    if ((number == '(000) 000-0000') ||
+    if (number == null) {
+      throw Exception('Null value found but not expected in _noNumber');
+    } else if ((number == '(000) 000-0000') ||
         (number == '0000000000') ||
         (number == '000-000-0000') ||
-        (number == '(000)-000-0000') ||
-        (number == null)) {
+        (number == '(000)-000-0000')) {
       return true;
     } else {
       return false;
     }
   }
 
-  ///Returns true if there if number is already in contact list. This function
-  ///will also determine if any matching phone numbers are under the same
-  ///insured. If the insured names match then the contact is merged in one.
-  ///Otherwise, both are written to file.
+  ///Returns true if a duplicate number is found. There are 3 outcomes:
+  ///1) Matching phone numbers are under the same insured. Contact is combined.
+  ///2) Matching phone numbers are under different insure. Contacts are written
+  ///to the report file.
+  ///3)Numbers don't match
   bool _isDuplicate(List<Data?> row, List<Map<String, dynamic>> contactList) {
-    //if (row.contains(null)) {
-    //throw Exception('Error in _isDuplicate');
-    //} CODE CAUSES EXCEPTION TO THROWN EVERY TIME
-
-    try {
-      for (var contact in contactList) {
-        String number = row[5]!.value.toString();
-        if (contact['phone'] == number) {
-          String name = _formatName(row[4]!.value.toString());
-          String contract = _formatName(row[3]!.value.toString());
-          String intentDate = row[6]!.value.toString();
-          String paymentAmt = row[8]!.value.toString();
-          if (_areSimilar(contact['name'], name)) {
-            //If the number was found and they are the same insured, merge
-            contactList.remove(contact);
-            contactList.add({
-              'name': contact['name'],
-              'phone': contact['phone'],
-              'var1':
-                  contact['var1'], //TODO what if they have different agents?
-              'var2': _addPayments(paymentAmt, contact['var2']),
-              'var3': _chooseSooner(intentDate, contact['var3']),
-              'var4': '${contact['var4']} and ${_addSpaces(contract)}',
-              'groupname': 'LP May6 thru May10',
-            });
-            return true;
-          } else {
-            _writeContactToFile(contact['phone']);
-          }
+    for (int x = 0; x < 9; ++x) {
+      if (row[x] == null) {
+        throw (Exception('Null found but not expected in _isDuplicate'));
+      }
+    }
+    for (var contact in contactList) {
+      String number = row[5]!.value.toString();
+      if (contact['phone'] == number) {
+        String name = _formatName(row[4]!.value.toString());
+        String contract = _formatName(row[3]!.value.toString());
+        String intentDate = row[6]!.value.toString();
+        String paymentAmt = row[8]!.value.toString();
+        if (_areSimilar(contact['name'], name)) {
+          //same phone, same insured -> merge
+          contactList.remove(contact);
+          contactList.add({
+            'name': contact['name'],
+            'phone': contact['phone'],
+            'var1': contact['var1'], //TODO what if they have different agents?
+            'var2': _addPayments(paymentAmt, contact['var2']),
+            'var3': _chooseSooner(intentDate, contact['var3']),
+            'var4': '${contact['var4']} and ${_addSpaces(contract)}',
+            //'groupname': 'LP May6 thru May10',
+          });
+          return true;
+        } else {
+          //same phone, different insured -> write to file
+          _writeContactToFile(contact['phone']);
           return true;
         }
       }
-    } catch (e) {
-      print('$e in function _isDuplicate');
     }
+    //different phone
     return false;
   }
 
@@ -197,29 +191,29 @@ class FileServices {
       date2.substring(8, 10)
     ];
 
+    if (x.length < 3) {
+      throw Exception('Unexpected date format');
+    }
+
     //compare years
-    try {
-      if (int.parse(x[2]) < int.parse(y[2])) {
-        return date1;
-      } else if (int.parse(x[2]) > int.parse(y[2])) {
-        return date2;
-      }
+    if (int.parse(x[2]) < int.parse(y[2])) {
+      return date1;
+    } else if (int.parse(x[2]) > int.parse(y[2])) {
+      return date2;
+    }
 
-      //compare months
-      if (int.parse(x[0]) < int.parse(y[0])) {
-        return date1;
-      } else if (int.parse(x[0]) > int.parse(y[0])) {
-        return date2;
-      }
+    //compare months
+    if (int.parse(x[0]) < int.parse(y[0])) {
+      return date1;
+    } else if (int.parse(x[0]) > int.parse(y[0])) {
+      return date2;
+    }
 
-      //compare dates
-      if (int.parse(x[1]) < int.parse(y[1])) {
-        return date1;
-      } else if (int.parse(x[1]) > int.parse(y[1])) {
-        return date2;
-      }
-    } catch (e) {
-      print('$e in function _chooseSooner');
+    //compare dates
+    if (int.parse(x[1]) < int.parse(y[1])) {
+      return date1;
+    } else if (int.parse(x[1]) > int.parse(y[1])) {
+      return date2;
     }
 
     return date1;

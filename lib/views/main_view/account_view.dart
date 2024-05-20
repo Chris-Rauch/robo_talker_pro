@@ -5,10 +5,10 @@ class AccountView extends StatefulWidget {
   const AccountView({super.key});
 
   @override
-  State<StatefulWidget> createState() => _AccountView();
+  AccountViewState createState() => AccountViewState();
 }
 
-class _AccountView extends State<AccountView> {
+class AccountViewState extends State<AccountView> {
   final _roboUsernameController = TextEditingController();
   final _roboKeyController = TextEditingController();
   final _callerID = TextEditingController();

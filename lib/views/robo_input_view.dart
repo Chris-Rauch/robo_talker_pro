@@ -1,4 +1,3 @@
-//import 'dart:js_interop';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:robo_talker_pro/auxillary/error_popup.dart';
@@ -8,18 +7,18 @@ import 'package:robo_talker_pro/services/roboBloc/robo_state.dart';
 import 'package:robo_talker_pro/views/progress_view.dart';
 import 'package:intl/intl.dart';
 import '../auxillary/button_styles.dart';
-//import 'package:time_picker_spinner/time_picker_spinner.dart';
 
 class RoboInputView extends StatefulWidget {
   const RoboInputView({super.key});
 
   @override
-  _RoboInputViewState createState() => _RoboInputViewState();
+  RoboInputViewState createState() => RoboInputViewState();
 }
 
-class _RoboInputViewState extends State<RoboInputView> {
+class RoboInputViewState extends State<RoboInputView> {
   final _jobName = TextEditingController();
   bool _goodInput = false;
+  late final String _folderPath;
   TimeOfDay startTime = TimeOfDay.now();
   TimeOfDay stopTime = TimeOfDay.now();
   DateTime startDate = DateTime.now();
@@ -35,6 +34,9 @@ class _RoboInputViewState extends State<RoboInputView> {
       lastDate: DateTime(2100),
     );
     if (pickedDate != null) {
+      if(!mounted) {
+        throw Exception('Error in _selectDateTime');
+      }
       TimeOfDay? pickedTime = await showTimePicker(
         context: context,
         initialTime: isStartTime ? startTime : stopTime,
@@ -65,13 +67,14 @@ class _RoboInputViewState extends State<RoboInputView> {
   }
 
   void _goNext() {
-    context.read<RoboBloc>().add(RoboMultiJobEvent());
+    context.read<RoboBloc>().add(RoboMultiJobEvent(_folderPath));
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<RoboBloc, RoboState>(
       builder: (context, state) {
+        context.visitAncestorElements((element) => false);
         if (state is RoboInitialState) {
           _goodInput = false;
         } else if (state is RoboGoodInputState) {
@@ -90,6 +93,7 @@ class _RoboInputViewState extends State<RoboInputView> {
     );
   }
 
+  // State when first build: FileReadSuccessState
   Widget _buildRoboInputUI() {
     return Scaffold(
       appBar: AppBar(

@@ -8,10 +8,10 @@ class MainView extends StatefulWidget {
   const MainView({super.key});
 
   @override
-  State<MainView> createState() => _MainViewState();
+  MainViewState createState() => MainViewState();
 }
 
-class _MainViewState extends State<MainView> {
+class MainViewState extends State<MainView> {
   int _selectedIndex = 0;
 
   void _onItemTapped(int index) {
@@ -56,7 +56,7 @@ class _MainViewState extends State<MainView> {
       case 0:
         return const ProjectView();
       case 1:
-        return AccountView();
+        return const AccountView();
       case 2:
         return const NoCallAgreementView();
       case 3:

@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+
 
 class ProgressBarView extends StatefulWidget {
   const ProgressBarView({super.key});
 
   @override
-  _ProgressBarViewState createState() => _ProgressBarViewState();
+  ProgressBarViewState createState() => ProgressBarViewState();
 }
 
-class _ProgressBarViewState extends State<ProgressBarView> {
-  _ProgressBarViewState();
+class ProgressBarViewState extends State<ProgressBarView> {
+  ProgressBarViewState();
 
   @override
   Widget build(BuildContext context) {
