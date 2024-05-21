@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 
 class AccountView extends StatefulWidget {
@@ -11,36 +12,37 @@ class AccountView extends StatefulWidget {
 class AccountViewState extends State<AccountView> {
   final _roboUsernameController = TextEditingController();
   final _roboKeyController = TextEditingController();
-  final _callerID = TextEditingController();
-  final _teUsername = TextEditingController();
-  final _tePword = TextEditingController();
+  final _callerIdController = TextEditingController();
+  final _teUsernameController = TextEditingController();
+  final _tePwordController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    loadData('roboUsername').then((value) {
+    loadData(Keys.roboUsername.toLocalizedString()).then((value) {
       _roboUsernameController.text = value ?? '';
     });
-    loadData('roboKey').then((value) {
+    loadData(Keys.zKey.toLocalizedString()).then((value) {
       _roboKeyController.text = value ?? '';
     });
-    loadData('caller_id').then((value) {
-      _callerID.text = value ?? '';
+    loadData(Keys.callerId.toLocalizedString()).then((value) {
+      _callerIdController.text = value ?? '';
     });
-    loadData('Third Eye Username').then((value) {
-      _teUsername.text = value ?? '';
+    loadData(Keys.teUsername.toLocalizedString()).then((value) {
+      _teUsernameController.text = value ?? '';
     });
-    loadData('Third Eye Password').then((value) {
-      _tePword.text = value ?? '';
+    loadData(Keys.tePassword.toLocalizedString()).then((value) {
+      _tePwordController.text = value ?? '';
     });
   }
 
   _save() {
-    saveData('roboUsername', _roboUsernameController.text);
-    saveData('roboKey', _roboKeyController.text);
-    saveData('caller_id', _callerID.text);
-    saveData('Third Eye Username', _teUsername.text);
-    saveData('Third Eye Password', _tePword.text);
+    saveData(
+        Keys.roboUsername.toLocalizedString(), _roboUsernameController.text);
+    saveData(Keys.zKey.toLocalizedString(), _roboKeyController.text);
+    saveData(Keys.callerId.toLocalizedString(), _callerIdController.text);
+    saveData(Keys.teUsername.toLocalizedString(), _teUsernameController.text);
+    saveData(Keys.tePassword.toLocalizedString(), _tePwordController.text);
   }
 
   @override
@@ -72,7 +74,7 @@ class AccountViewState extends State<AccountView> {
               ),
             ),
             TextField(
-              controller: _callerID,
+              controller: _callerIdController,
               decoration: const InputDecoration(
                 hintText: 'Caller ID',
               ),
@@ -84,13 +86,13 @@ class AccountViewState extends State<AccountView> {
               ),
             ),
             TextField(
-              controller: _teUsername,
+              controller: _teUsernameController,
               decoration: const InputDecoration(
                 hintText: 'Username',
               ),
             ),
             TextField(
-              controller: _tePword,
+              controller: _tePwordController,
               obscureText: true,
               decoration: const InputDecoration(
                 hintText: 'Password',

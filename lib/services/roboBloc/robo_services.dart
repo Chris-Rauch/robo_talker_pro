@@ -63,24 +63,25 @@ class RoboServices {
 
   //TODO
   Future<String> getBody(RequestType requestType) async {
-    Map<String,dynamic> body;
+    Map<String, dynamic> body;
     switch (requestType) {
       case RequestType.multiJobPost:
-        final contactList = await loadData(Key.contactList.toLocalizedString());
+        final contactList =
+            await loadData(Keys.contactList.toLocalizedString());
         _addGroupName(contactList);
 
         body = {
-        'whattodo': 'SendTtsMessage',
-        'jobname': 'Testing',
-        'optcallerid': '9494709674',
-        'messageid': '0',
-        'messagetext': LATE_PAYMENT_MESSAGE,
-        'customername': 'Chris Rauch',
-        'extrareportemail': 'rauch.christopher13@gmail.com',
-        'phonelistgroupname': 'Testing',
-        'contactlist': contactList,
-        'rundatetime': '',
-        'enddatetime': '',
+          'whattodo': 'SendTtsMessage',
+          'jobname': 'Testing',
+          'optcallerid': '9494709674',
+          'messageid': '0',
+          'messagetext': LATE_PAYMENT_MESSAGE,
+          'customername': 'Chris Rauch',
+          'extrareportemail': 'rauch.christopher13@gmail.com',
+          'phonelistgroupname': 'Testing',
+          'contactlist': contactList,
+          'rundatetime': '',
+          'enddatetime': '',
         };
         break;
       default:
@@ -93,13 +94,13 @@ class RoboServices {
   ///Also inserts phonelistgroupname
   void _addGroupName(List<Map<String, dynamic>> contactList) {
     for (int x = 0; x < contactList.length; ++x) {
-      contactList[x][Key.groupName.toLocalizedString()] =
+      contactList[x][Keys.groupName.toLocalizedString()] =
           'group name'; //TODO implement group name
     }
   }
 
-  Future<Map<String,dynamic>> _getContactList() async {
-    final contactList = await loadData(Key.contactList.toLocalizedString());
+  Future<Map<String, dynamic>> _getContactList() async {
+    final contactList = await loadData(Keys.contactList.toLocalizedString());
     return contactList;
   }
 }

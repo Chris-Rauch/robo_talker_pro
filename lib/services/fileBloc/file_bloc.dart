@@ -47,7 +47,7 @@ class FileBloc extends Bloc<FileEvent, FileState> {
 
     on<ReadFileEvent>((event, emit) async {
       emit(FileLoadingState());
-      String contactList = Key.contactList.toLocalizedString();
+      String contactList = Keys.contactList.toLocalizedString();
       PROJECT_DATA_PATH = p.join(event.folderPath, PROJECT_DATA_FILE_NAME);
 
       if (await File(PROJECT_DATA_PATH).exists()) {

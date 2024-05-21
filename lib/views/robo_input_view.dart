@@ -18,56 +18,58 @@ class RoboInputView extends StatefulWidget {
 class RoboInputViewState extends State<RoboInputView> {
   final _jobName = TextEditingController();
   bool _goodInput = false;
-  late final String _folderPath;
-  TimeOfDay startTime = TimeOfDay.now();
-  TimeOfDay stopTime = TimeOfDay.now();
-  DateTime startDate = DateTime.now();
-  DateTime stopDate = DateTime.now();
-  DateTime startDateTime = DateTime.now();
-  DateTime stopDateTime = DateTime.now();
 
-  Future<void> _selectDateTime(BuildContext context, bool isStartTime) async {
+  late final String _folderPath;
+  TimeOfDay _startTime = const TimeOfDay(hour: 12, minute: 15);
+  TimeOfDay _stopTime = const TimeOfDay(hour: 12, minute: 30);
+  DateTime _startDate = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<RoboBloc>().add(RoboInitializeEvent());
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: isStartTime ? startDate : stopDate,
+      initialDate: _startDate,
       firstDate: DateTime.now(),
       lastDate: DateTime(2100),
     );
     if (pickedDate != null) {
-      if(!mounted) {
-        throw Exception('Error in _selectDateTime');
-      }
-      TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: isStartTime ? startTime : stopTime,
-      );
-      if (pickedTime != null) {
-        DateTime selectedDateTime = DateTime(
-          pickedDate.year,
-          pickedDate.month,
-          pickedDate.day,
-          pickedTime.hour,
-          (pickedTime.minute / 15).round() * 15,
-        );
-        setState(() {
-          if (isStartTime) {
-            startTime = pickedTime;
-            startDate = pickedDate;
-            // Use selectedDateTime for the combined date and time
-            startDateTime = selectedDateTime;
+      setState(() {
+        _startDate = pickedDate;
+      });
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context, bool isStartTime) async {
+    TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: isStartTime ? _startTime : _stopTime,
+    );
+
+    if (pickedTime != null) {
+      setState(() {
+        if (isStartTime) {
+          _startTime = pickedTime;
+          if (_startTime.minute < 45) {
+            _stopTime = TimeOfDay(
+                hour: pickedTime.hour, minute: (pickedTime.minute + 15));
           } else {
-            stopTime = pickedTime;
-            stopDate = pickedDate;
-            // Use selectedDateTime for the combined date and time
-            stopDateTime = selectedDateTime;
+            _stopTime = TimeOfDay(
+                hour: (pickedTime.hour + 1), minute: (pickedTime.minute - 45));
           }
-        });
-      }
+        } else {
+          _stopTime = pickedTime;
+        }
+      });
     }
   }
 
   void _goNext() {
-    context.read<RoboBloc>().add(RoboMultiJobEvent(_folderPath));
+    context.read<RoboBloc>().add(RoboSubmitJobEvent(_jobName.text, _startDate, _startTime, _stopTime));
   }
 
   @override
@@ -109,18 +111,29 @@ class RoboInputViewState extends State<RoboInputView> {
               decoration: const InputDecoration(
                 hintText: "Job Name",
               ),
-              onEditingComplete: () {
-                context.read<RoboBloc>().add(RoboSubmittedJobNameEvent());
-              },
+              /*onEditingComplete: () {
+                context.read<RoboBloc>().add(RoboSubmitJobEvent(_jobName.text));
+              },*/
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Text('Date: ${DateFormat('EEE, M/d/y').format(_startDate)}'),
+                const SizedBox(width: 32),
+                ElevatedButton(
+                  onPressed: () => _selectDate(context),
+                  child: const Text("Select Date"),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Row(
               children: [
                 Text(
-                    "Start Time: ${DateFormat('yyyy-MM-dd HH:mm').format(startDateTime)}"), // Display selected date and time for start time
+                    "Start Time: ${_startTime.format(context)}"), // Display selected date and time for start time
                 const SizedBox(width: 32),
                 ElevatedButton(
-                  onPressed: () => _selectDateTime(context, true),
+                  onPressed: () => _selectTime(context, true),
                   child: const Text("Select Time"),
                 ),
               ],
@@ -129,10 +142,10 @@ class RoboInputViewState extends State<RoboInputView> {
             Row(
               children: [
                 Text(
-                    "Stop Time: ${DateFormat('yyyy-MM-dd HH:mm').format(stopDateTime)}"), // Display selected date and time for stop time
+                    'Stop Time: ${_stopTime.format(context)}'), // Display selected date and time for stop time
                 const SizedBox(width: 32),
                 ElevatedButton(
-                  onPressed: () => _selectDateTime(context, false),
+                  onPressed: () => _selectTime(context, false),
                   child: const Text("Select Time"),
                 ),
               ],
@@ -144,7 +157,7 @@ class RoboInputViewState extends State<RoboInputView> {
                 ElevatedButton(
                   style:
                       (_goodInput) ? enabledButtonStyle : disabledButtonStyle,
-                  onPressed: () => (_goodInput) ? _goNext() : null,
+                  onPressed: () => _goNext,
                   child: const Text('Next'),
                 ),
               ],

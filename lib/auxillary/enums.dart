@@ -2,21 +2,36 @@ enum ProjectType { latePayment, returnMail }
 
 enum RequestType { multiJobPost }
 
-enum Key { username, zKey, contactList, groupName, phoneListGroupName }
+enum Keys {
+  roboUsername,
+  zKey,
+  contactList,
+  groupName,
+  phoneListGroupName,
+  callerId,
+  teUsername,
+  tePassword
+}
 
-extension KeyExtension on Key {
+extension KeyExtension on Keys {
   String toLocalizedString() {
     switch (this) {
-      case Key.username:
-        return 'username';
-      case Key.zKey:
+      case Keys.roboUsername:
+        return 'roboUsername';
+      case Keys.zKey:
         return 'z_key';
-      case Key.contactList:
+      case Keys.contactList:
         return 'contactList';
-      case Key.groupName:
+      case Keys.groupName:
         return 'groupname';
-      case Key.phoneListGroupName:
+      case Keys.phoneListGroupName:
         return 'phonelistgroupname';
+      case Keys.callerId:
+        return 'caller_id';
+      case Keys.teUsername:
+        return 'Third Eye Username';
+      case Keys.tePassword:
+        return 'Third Eye Password';
       default:
         throw ArgumentError('Unknown key: $this');
     }

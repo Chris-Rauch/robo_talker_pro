@@ -2,6 +2,7 @@
 library robo_bloc;
 
 import 'package:bloc/bloc.dart';
+import 'package:flutter/material.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'robo_event.dart';
 import 'robo_state.dart';
@@ -11,10 +12,33 @@ import 'robo_services.dart';
 
 class RoboBloc extends Bloc<RoboEvent, RoboState> {
   RoboBloc() : super(RoboInitialState()) {
-    RoboServices _roboServices = RoboServices();
-    //TODO implement group name based on the calls sent date and job type
-    on<RoboSubmittedJobNameEvent>((event, emit) async {
-      // TODO
+    on<RoboInitializeEvent>((event, emit) {
+      emit(RoboLoadingState());
+      //TODO generate a job name and send it to RoboView
+      emit(RoboInitialState());
+    });
+
+    ///Triggered when the user attempts to submit a job. Checks for good input
+    on<RoboSubmitJobEvent>((event, emit) async {
+      try {
+        String jobName = event.jobName;
+        bool goodInput;
+
+        //checking job name
+        if (jobName.length < 50) {
+          goodInput = true;
+        } else {
+          goodInput = false;
+        }
+
+        //checking start/stop times
+        //if(event.startDate < event.stopTime)
+
+        //call roboServices to update JSON body
+        emit(RoboGoodInputState(jobName: goodInput));
+      } catch (e) {
+        emit(RoboErrorState('Something went wrong'));
+      }
       // if(all fields are good) then emit RoboGoodInputState
       // else emit RoboErrorState
       //
