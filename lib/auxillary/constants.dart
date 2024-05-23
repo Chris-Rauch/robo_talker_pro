@@ -11,4 +11,4 @@ const String REPORT_FILE_NAME = 'report.xlsx';
 const String PROJECT_DATA_FILE_NAME = '.project.txt';
 
 ///Full path to the file where REST post data is stored. This is the user selected File.
-late String PROJECT_DATA_PATH; //initialized in <ReadFileEvent>
+String? PROJECT_DATA_PATH; //initialized in <ReadFileEvent>

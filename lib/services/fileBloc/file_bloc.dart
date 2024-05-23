@@ -50,12 +50,11 @@ class FileBloc extends Bloc<FileEvent, FileState> {
       String contactList = Keys.contactList.toLocalizedString();
       PROJECT_DATA_PATH = p.join(event.folderPath, PROJECT_DATA_FILE_NAME);
 
-      if (await File(PROJECT_DATA_PATH).exists()) {
-        throw Exception(
-            'A project already exists in this Folder. Please select a new folder');
-      }
-
       try {
+        if (File(PROJECT_DATA_PATH!).existsSync()) {
+          throw Exception(
+              'A project already exists in this Folder. Please select a new folder');
+        }
         FileServices fileServices =
             FileServices(event.filePath, event.folderPath);
         String contacts = await fileServices.handleLatePayment();

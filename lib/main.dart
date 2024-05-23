@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         colorScheme: const ColorScheme.light(),
       ),
-      initialRoute: '/late_payment/robo_input',
+      initialRoute: '/',
       routes: {
         '/': (context) => const MainView(),
         '/late_payment': (context) =>

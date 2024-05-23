@@ -13,8 +13,8 @@ class RoboSubmitJobEvent extends RoboEvent {
 }
 
 class RoboMultiJobEvent extends RoboEvent {
-  final String folderPath;
-  RoboMultiJobEvent(this.folderPath);
+  //final String folderPath;
+  //RoboMultiJobEvent(this.folderPath);
 }
 
 class RoboErrorEvent extends RoboEvent {

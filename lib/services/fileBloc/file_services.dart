@@ -10,6 +10,7 @@ import 'package:excel/excel.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:robo_talker_pro/auxillary/constants.dart';
+import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 
 class FileServices {
@@ -23,13 +24,12 @@ class FileServices {
         _reportFileLocation = p.join(folderPath, REPORT_FILE_NAME) {
     //look for input errors
     if (!File(filePath).existsSync()) {
-      throw ArgumentError('This file doesn\'t exist. Was it moved? -> $filePath');
-    }
-    else if (p.extension(filePath) == '.xls') {
+      throw ArgumentError(
+          'This file doesn\'t exist. Was it moved? -> $filePath');
+    } else if (p.extension(filePath) == '.xls') {
       throw ArgumentError(
           'Excel file outdate. Make sure the file extension is .xlsx (Excel 2007 or newer)');
-    }
-    else if (p.extension(filePath) != '.xlsx') {
+    } else if (p.extension(filePath) != '.xlsx') {
       throw ArgumentError(
           'Invalid File Type. Make sure the file extension is .xlsx');
     }
@@ -40,9 +40,14 @@ class FileServices {
   /// a report file located in 'folderPath.'
   Future<String> handleLatePayment() async {
     List<Map<String, dynamic>> contactList = [];
+    String groupname = getGroupName();
     String sheetName = _latePaymentFile.getDefaultSheet() ??
         (throw Exception('Cannot access default sheet'));
     Sheet sheet = _latePaymentFile[sheetName];
+
+    //save job name to project data file
+    saveData(Keys.groupName.toLocalizedString(), groupname,
+        path: PROJECT_DATA_PATH);
 
     //traverse excel file looking for NCA's and bad phone #'s
     for (int x = 2; x < sheet.rows.length; ++x) {
@@ -67,7 +72,7 @@ class FileServices {
             createContact = false;
             _writeRowToFile(row);
             break innerLoop;
-          } else if (_isDuplicate(row, contactList)) {
+          } else if (await _isDuplicate(row, contactList)) {
             createContact = false;
             break innerLoop;
           } else {
@@ -85,11 +90,26 @@ class FileServices {
           'var2': _removeDollar(row[8]?.value.toString()), //payment amount
           'var3': _formatDate(row[6]?.value.toString()), //due date
           'var4': _addSpaces(row[3]?.value.toString()), //contract number
-          //'groupname': 'LP May6 thru May10',
+          'groupname': groupname,
         });
       }
     }
     return json.encode(contactList);
+  }
+
+  ///Creates a job name based on the header of the input file
+  String getGroupName() {
+    String sheetName = _latePaymentFile.getDefaultSheet() ??
+        (throw Exception('Cannot access default sheet'));
+    Sheet sheet = _latePaymentFile[sheetName];
+    String? row = sheet.rows[0][0]?.value.toString();
+
+    if (row != null) {
+      row = row.substring(24);
+      return 'LP $row';
+    } else {
+      return '';
+    }
   }
 
   ///Remove dollar signs. This is because of how robotalker.com reads them.
@@ -141,12 +161,15 @@ class FileServices {
   ///2) Matching phone numbers are under different insure. Contacts are written
   ///to the report file.
   ///3)Numbers don't match
-  bool _isDuplicate(List<Data?> row, List<Map<String, dynamic>> contactList) {
+  Future<bool> _isDuplicate(
+      List<Data?> row, List<Map<String, dynamic>> contactList) async {
     for (int x = 0; x < 9; ++x) {
       if (row[x] == null) {
         throw (Exception('Null found but not expected in _isDuplicate'));
       }
     }
+    var groupName = await loadData(Keys.groupName.toLocalizedString(),
+        path: PROJECT_DATA_PATH);
     for (var contact in contactList) {
       String number = row[5]!.value.toString();
       if (contact['phone'] == number) {
@@ -164,7 +187,7 @@ class FileServices {
             'var2': _addPayments(paymentAmt, contact['var2']),
             'var3': _chooseSooner(intentDate, contact['var3']),
             'var4': '${contact['var4']} and ${_addSpaces(contract)}',
-            //'groupname': 'LP May6 thru May10',
+            'groupname': groupName,
           });
           return true;
         } else {
@@ -179,7 +202,9 @@ class FileServices {
   }
 
   ///Expects inputs in the following format: 4/22/2024
+  ///date 2 input is: May 13
   String _chooseSooner(String date1, String date2) {
+    return date1;
     List<String> x = [
       date1.substring(0, 4),
       date1.substring(5, 7),
@@ -191,7 +216,7 @@ class FileServices {
       date2.substring(8, 10)
     ];
 
-    if (x.length < 3) {
+    if (x.length != 3 || y.length != 3) {
       throw Exception('Unexpected date format');
     }
 

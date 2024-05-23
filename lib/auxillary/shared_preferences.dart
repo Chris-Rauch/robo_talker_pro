@@ -12,20 +12,19 @@ import 'package:path_provider/path_provider.dart';
 Future<void> saveData(String key, dynamic data, {String? path}) async {
   Map<String, dynamic> savedData = {};
   Directory directory;
+  File file;
   try {
     if (path == null) {
       directory = await getApplicationSupportDirectory();
+      if (Platform.isWindows) {
+        file = File('${directory.path}\\preferences.json');
+      } else if (Platform.isMacOS || Platform.isLinux) {
+        file = File('${directory.path}/preferences.json');
+      } else {
+        throw 'Unknown Operating System';
+      }
     } else {
-      directory = Directory(path);
-    }
-    File file;
-
-    if (Platform.isWindows) {
-      file = File('${directory.path}\\preferences.json');
-    } else if (Platform.isMacOS || Platform.isLinux) {
-      file = File('${directory.path}/preferences.json');
-    } else {
-      throw 'Unknown Operating System';
+      file = File(path);
     }
 
     // if file does not exist, create one
@@ -49,23 +48,22 @@ Future<void> saveData(String key, dynamic data, {String? path}) async {
   }
 }
 
-// Load data from a file
-Future<dynamic> loadData(String key, {Directory? dir}) async {
+// Load data from a file. Returns null if not found
+Future<dynamic> loadData(String key, {String? path}) async {
   try {
-    Directory directory;
-    if (dir == null) {
-      directory = await getApplicationSupportDirectory();
-    } else {
-      directory = dir;
-    }
     File file;
-
-    if (Platform.isWindows) {
-      file = File('${directory.path}\\preferences.json');
-    } else if (Platform.isMacOS || Platform.isLinux) {
-      file = File('${directory.path}/preferences.json');
+    Directory directory;
+    if (path == null) {
+      directory = await getApplicationSupportDirectory();
+      if (Platform.isWindows) {
+        file = File('${directory.path}\\preferences.json');
+      } else if (Platform.isMacOS || Platform.isLinux) {
+        file = File('${directory.path}/preferences.json');
+      } else {
+        throw 'Unknown Operating System';
+      }
     } else {
-      throw 'Unknown Operating System';
+      file = File(path);
     }
 
     if (!file.existsSync()) {

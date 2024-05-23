@@ -69,7 +69,8 @@ class RoboInputViewState extends State<RoboInputView> {
   }
 
   void _goNext() {
-    context.read<RoboBloc>().add(RoboSubmitJobEvent(_jobName.text, _startDate, _startTime, _stopTime));
+    context.read<RoboBloc>().add(
+        RoboSubmitJobEvent(_jobName.text, _startDate, _startTime, _stopTime));
   }
 
   @override
@@ -78,9 +79,10 @@ class RoboInputViewState extends State<RoboInputView> {
       builder: (context, state) {
         context.visitAncestorElements((element) => false);
         if (state is RoboInitialState) {
-          _goodInput = false;
+          _jobName.text = state.jobName;
         } else if (state is RoboGoodInputState) {
-          _goodInput = true; //allow user to submit job
+          //TODO show summary of outbound calls
+          context.read<RoboBloc>().add(RoboMultiJobEvent());
         } else if (state is RoboCallsActiveState) {
           return const ProgressBarView();
         } else if (state is RoboLoadingState) {
@@ -157,7 +159,7 @@ class RoboInputViewState extends State<RoboInputView> {
                 ElevatedButton(
                   style:
                       (_goodInput) ? enabledButtonStyle : disabledButtonStyle,
-                  onPressed: () => _goNext,
+                  onPressed: () => _goNext(),
                   child: const Text('Next'),
                 ),
               ],

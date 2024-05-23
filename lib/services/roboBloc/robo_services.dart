@@ -66,41 +66,34 @@ class RoboServices {
     Map<String, dynamic> body;
     switch (requestType) {
       case RequestType.multiJobPost:
-        final contactList =
-            await loadData(Keys.contactList.toLocalizedString());
-        _addGroupName(contactList);
+        final contactList = await loadData(Keys.contactList.toLocalizedString(),
+            path: PROJECT_DATA_PATH);
+        final callerId = await loadData(Keys.callerId.toLocalizedString(),
+            path: PROJECT_DATA_PATH);
+        final groupName = await loadData(Keys.groupName.toLocalizedString(),
+            path: PROJECT_DATA_PATH);
+        final startTime = await loadData(Keys.startTime.toLocalizedString(),
+            path: PROJECT_DATA_PATH);
+        final endTime = await loadData(Keys.endTime.toLocalizedString(),
+            path: PROJECT_DATA_PATH);
 
         body = {
           'whattodo': 'SendTtsMessage',
-          'jobname': 'Testing',
-          'optcallerid': '9494709674',
+          'jobname': groupName,
+          'optcallerid': callerId,
           'messageid': '0',
           'messagetext': LATE_PAYMENT_MESSAGE,
           'customername': 'Chris Rauch',
           'extrareportemail': 'rauch.christopher13@gmail.com',
-          'phonelistgroupname': 'Testing',
-          'contactlist': contactList,
-          'rundatetime': '',
-          'enddatetime': '',
+          'phonelistgroupname': groupName,
+          'contactlist': jsonDecode(contactList),
+          'rundatetime': startTime,
+          'enddatetime': endTime,
         };
         break;
       default:
         throw Exception('Could not load contact list from file');
     }
     return jsonEncode(body);
-  }
-
-  ///Inserts the group name for every contact in contactList.
-  ///Also inserts phonelistgroupname
-  void _addGroupName(List<Map<String, dynamic>> contactList) {
-    for (int x = 0; x < contactList.length; ++x) {
-      contactList[x][Keys.groupName.toLocalizedString()] =
-          'group name'; //TODO implement group name
-    }
-  }
-
-  Future<Map<String, dynamic>> _getContactList() async {
-    final contactList = await loadData(Keys.contactList.toLocalizedString());
-    return contactList;
   }
 }

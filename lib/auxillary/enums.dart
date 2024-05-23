@@ -7,7 +7,8 @@ enum Keys {
   zKey,
   contactList,
   groupName,
-  phoneListGroupName,
+  startTime,
+  endTime,
   callerId,
   teUsername,
   tePassword
@@ -24,8 +25,10 @@ extension KeyExtension on Keys {
         return 'contactList';
       case Keys.groupName:
         return 'groupname';
-      case Keys.phoneListGroupName:
-        return 'phonelistgroupname';
+      case Keys.startTime:
+        return 'rundatetime';
+      case Keys.endTime:
+        return 'enddatetime';
       case Keys.callerId:
         return 'caller_id';
       case Keys.teUsername:

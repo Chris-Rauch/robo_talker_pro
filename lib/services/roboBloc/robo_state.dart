@@ -1,16 +1,15 @@
 abstract class RoboState {}
 
-class RoboInitialState extends RoboState {}
+class RoboInitialState extends RoboState {
+  String jobName;
+  RoboInitialState(this.jobName);
+}
 
 class RoboCallsActiveState extends RoboState {}
 
 class RoboGoodInputState extends RoboState {
-  final bool jobName, startTime, stopTime, enoughFunds;
-  RoboGoodInputState(
-      {this.jobName = false,
-      this.startTime = false,
-      this.stopTime = false,
-      this.enoughFunds = false});
+  //final bool jobName, startTime, stopTime, enoughFunds;
+  //RoboGoodInputState();
 }
 
 class RoboErrorState extends RoboState {
