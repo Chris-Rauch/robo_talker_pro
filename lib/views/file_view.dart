@@ -17,6 +17,8 @@ class FileView extends StatefulWidget {
 }
 
 class FileViewState extends State<FileView> {
+  FileViewState();
+
   late final ProjectType _projectType;
   String _filePath = "";
   String _folderPath = "";

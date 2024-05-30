@@ -90,11 +90,14 @@ class RoboBloc extends Bloc<RoboEvent, RoboState> {
 
         //200 -> success
         if (response.statusCode == 200) {
-          final Map<String, dynamic> responseData = jsonDecode(response.body);
+          final responseData = jsonDecode(response.body);
           print(responseData);
           emit(RoboCallsActiveState());
-          //TODO
-        } else {
+          //TODO emit a loading screen indicating when the calls will be done
+        } else if(response.statusCode == 401) {
+          //TODO handle invalid login credentials
+        } 
+        else {
           print('${response.statusCode} ${response.headers} ${response.body}');
           throw Exception(
               '${response.statusCode} ${response.headers} ${response.body}');
