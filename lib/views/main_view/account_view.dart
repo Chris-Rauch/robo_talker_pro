@@ -22,7 +22,7 @@ class AccountViewState extends State<AccountView> {
     loadData(Keys.roboUsername.toLocalizedString()).then((value) {
       _roboUsernameController.text = value ?? '';
     });
-    loadData(Keys.zKey.toLocalizedString()).then((value) {
+    loadData(Keys.zToken.toLocalizedString()).then((value) {
       _roboKeyController.text = value ?? '';
     });
     loadData(Keys.callerId.toLocalizedString()).then((value) {
@@ -39,7 +39,7 @@ class AccountViewState extends State<AccountView> {
   _save() {
     saveData(
         Keys.roboUsername.toLocalizedString(), _roboUsernameController.text);
-    saveData(Keys.zKey.toLocalizedString(), _roboKeyController.text);
+    saveData(Keys.zToken.toLocalizedString(), _roboKeyController.text);
     saveData(Keys.callerId.toLocalizedString(), _callerIdController.text);
     saveData(Keys.teUsername.toLocalizedString(), _teUsernameController.text);
     saveData(Keys.tePassword.toLocalizedString(), _tePwordController.text);

@@ -58,13 +58,16 @@ class FileServices {
         int? columnIndex = cell?.columnIndex;
         //Agent Name
         if (columnIndex == 0) {
-          if (await _noCallAgreement(cell?.value.toString())) {
+          if (await _noCallAgreement(company: cell?.value.toString())) {
             createContact = false;
             _writeRowToFile(row);
             break innerLoop;
           } else {
             createContact == true;
           }
+        }
+        //Agent Code
+        if (columnIndex == 1) {
         }
         //Phone number
         else if (columnIndex == 5) {
@@ -122,21 +125,34 @@ class FileServices {
   }
 
   ///Format dates for the REST robotalker.
-  ///[2024-04-26T00:00:00.000Z] -> [April 26]
+  ///[2024-04-26T00:00:00.000Z] -> [April 26, 2024]
   String _formatDate(String? date) {
     if (date == null) {
       throw Exception('Null value found but not expected in _formatDate');
     }
     DateTime time = DateTime.parse(date);
-    return DateFormat('MMM d').format(time);
+    return DateFormat('yMMMd').format(time);
   }
 
-  /// Checks if the company is in the No Call Agreement list.
-  Future<bool> _noCallAgreement(String? company) async {
-    List<dynamic> nca = await loadData('nca_list');
-    for (var x in nca) {
-      if (x.trim() == company?.trim()) {
-        return true;
+  /// Checks if the company is in the No Call Agreement list. This function
+  /// primarily uses the agent code for identification. It will also check the
+  /// agent's name
+  Future<bool> _noCallAgreement({String? company, String? agentCode}) async {
+    if (company != null || agentCode != null) {
+      List<dynamic> nca = await loadData(Keys.ncaList.toLocalizedString());
+      for (var x in nca) {
+        //check for agent code
+        if (agentCode != null) {
+          if (x[Keys.agentCode.toLocalizedString()].trim() ==
+              agentCode.trim()) {
+            return true;
+          }
+        }
+        if (company != null) {
+          if (x[Keys.company.toLocalizedString()].trim() == company.trim()) {
+            return true;
+          }
+        }
       }
     }
     return false;
@@ -192,7 +208,10 @@ class FileServices {
           return true;
         } else {
           //same phone, different insured -> write to file
+          contactList.remove(contact);
           _writeContactToFile(contact['phone']);
+          _writeRowToFile(row);
+
           return true;
         }
       }
@@ -201,54 +220,53 @@ class FileServices {
     return false;
   }
 
-  ///Expects inputs in the following format: 4/22/2024
-  ///date 2 input is: May 13
+  /// Accepts the following inputs: 'MMMM d, yyyy', 'MM/dd/yyyy', 'yyyy-MM-dd'
+  /// Returns the earlier date in MMMM d, yyyy format
   String _chooseSooner(String date1, String date2) {
-    return date1;
-    List<String> x = [
-      date1.substring(0, 4),
-      date1.substring(5, 7),
-      date1.substring(8, 10)
-    ];
-    List<String> y = [
-      date2.substring(0, 4),
-      date2.substring(5, 7),
-      date2.substring(8, 10)
+    List<String> patterns = [
+      'MMMM d, yyyy',
+      'MMM d, yyyy',
+      'MM/dd/yyyy',
+      'yyyy-MM-dd',
+      "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     ];
 
-    if (x.length != 3 || y.length != 3) {
-      throw Exception('Unexpected date format');
+    String? findMatchingPattern(String input, List<String> patterns) {
+      for (String pattern in patterns) {
+        try {
+          DateFormat(pattern).parseStrict(input);
+          return pattern;
+        } catch (e) {
+          // Ignore the error and try the next pattern
+        }
+      }
+      return null;
     }
 
-    //compare years
-    if (int.parse(x[2]) < int.parse(y[2])) {
-      return date1;
-    } else if (int.parse(x[2]) > int.parse(y[2])) {
-      return date2;
+    String? matchingPatternDate1 = findMatchingPattern(date1, patterns);
+    String? matchingPatternDate2 = findMatchingPattern(date2, patterns);
+
+    if (matchingPatternDate1 == null || matchingPatternDate2 == null) {
+      throw Exception('Could not parse the date in _chooseSooner');
     }
 
-    //compare months
-    if (int.parse(x[0]) < int.parse(y[0])) {
-      return date1;
-    } else if (int.parse(x[0]) > int.parse(y[0])) {
-      return date2;
-    }
+    DateTime dateTime1 = DateFormat(matchingPatternDate1).parse(date1);
+    DateTime dateTime2 = DateFormat(matchingPatternDate2).parse(date2);
 
-    //compare dates
-    if (int.parse(x[1]) < int.parse(y[1])) {
-      return date1;
-    } else if (int.parse(x[1]) > int.parse(y[1])) {
-      return date2;
+    if (dateTime1.isBefore(dateTime2)) {
+      return DateFormat('MMMM d, yyyy').format(dateTime1);
+    } else if (dateTime2.isBefore(dateTime2)) {
+      return DateFormat('MMMM d, yyyy').format(dateTime2);
+    } else {
+      return DateFormat('MMMM d, yyyy').format(dateTime1);
     }
-
-    return date1;
   }
 
   ///Adds the two arguments
   String _addPayments(String amount1, String amount2) {
     double x = double.parse(amount1);
     double y = double.parse(amount2);
-    return ((x + y).toString());
+    return ((x + y).toStringAsFixed(2));
   }
 
   /// Returns the argument but with spaces.
@@ -259,17 +277,20 @@ class FileServices {
     if (contractNumber == null) {
       return '';
     }
-
     //add spaces
     for (int x = 0; x < contractNumber.length; ++x) {
       newString += '${contractNumber[x]} ';
     }
-
     //pop last char, which should be an extra space
     if (newString.isNotEmpty) {
       newString = newString.substring(0, newString.length - 1);
     }
     return newString;
+  }
+
+  String _removeSpaces(String contractNumber) {
+    contractNumber = contractNumber.replaceAll(' ', '');
+    return contractNumber.replaceAll('and', ' and ');
   }
 
   /// Appends argument 'row' to _reportFile

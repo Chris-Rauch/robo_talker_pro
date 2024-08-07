@@ -5,7 +5,10 @@ class RoboInitialState extends RoboState {
   RoboInitialState(this.jobName);
 }
 
-class RoboCallsActiveState extends RoboState {}
+class RoboCallsActiveState extends RoboState {
+  final String endtime;
+  RoboCallsActiveState(this.endtime);
+}
 
 class RoboGoodInputState extends RoboState {
   //final bool jobName, startTime, stopTime, enoughFunds;

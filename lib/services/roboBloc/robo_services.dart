@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi';
 import 'package:robo_talker_pro/auxillary/constants.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
@@ -28,8 +29,6 @@ import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 ///    "rundatetime": "2024/05/15 15:15:00"
 
 class RoboServices {
-  RoboServices();
-
   ///Returns the body of the
   String createJsonBody() {
     return '';
@@ -51,29 +50,32 @@ class RoboServices {
 
   Future<Map<String, String>> getHeader() async {
     // Create a base64 encoded string of 'username:token' for Basic Auth
-    final username = await loadData('username');
-    final token = await loadData('z_key');
+    final username = await loadData(Keys.roboUsername.toLocalizedString());
+    final token = await loadData(Keys.zToken.toLocalizedString());
     var credentials = base64Encode(utf8.encode('$username:$token'));
     return {
       'Authorization': 'Basic $credentials',
-      'Content-Type': 'application/json; charset=UTF-8',
+      //'Content-Type': 'application/json',
     };
   }
 
-  //TODO
-  Future<String> getBody(RequestType requestType) async {
-    Map<String, dynamic> body;
+  ///Returns the body for the REST request
+  Future<Map<String, String>> getBody(RequestType requestType) async {
+    Map<String, String> body;
     switch (requestType) {
       case RequestType.multiJobPost:
-        final contactList = await loadData(Keys.contactList.toLocalizedString(),
+        final String contactList = await loadData(
+            Keys.contactList.toLocalizedString(),
             path: PROJECT_DATA_PATH);
-        final callerId = await loadData(Keys.callerId.toLocalizedString(),
+        final String callerId =
+            await loadData(Keys.callerId.toLocalizedString());
+        final String groupName = await loadData(
+            Keys.groupName.toLocalizedString(),
             path: PROJECT_DATA_PATH);
-        final groupName = await loadData(Keys.groupName.toLocalizedString(),
+        final String startTime = await loadData(
+            Keys.startTime.toLocalizedString(),
             path: PROJECT_DATA_PATH);
-        final startTime = await loadData(Keys.startTime.toLocalizedString(),
-            path: PROJECT_DATA_PATH);
-        final endTime = await loadData(Keys.endTime.toLocalizedString(),
+        final String endTime = await loadData(Keys.endTime.toLocalizedString(),
             path: PROJECT_DATA_PATH);
 
         body = {
@@ -85,7 +87,7 @@ class RoboServices {
           'customername': 'Chris Rauch',
           'extrareportemail': 'rauch.christopher13@gmail.com',
           'phonelistgroupname': groupName,
-          'contactlist': jsonDecode(contactList),
+          'contactlist': jsonEncode(contactList),
           'rundatetime': startTime,
           'enddatetime': endTime,
         };
@@ -93,6 +95,11 @@ class RoboServices {
       default:
         throw Exception('Could not load contact list from file');
     }
-    return jsonEncode(body);
+    return body;
+  }
+
+  //TODO Implement
+  String getEndTime() {
+    return '';
   }
 }

@@ -4,14 +4,17 @@ enum RequestType { multiJobPost }
 
 enum Keys {
   roboUsername,
-  zKey,
+  zToken,
   contactList,
   groupName,
   startTime,
   endTime,
   callerId,
   teUsername,
-  tePassword
+  tePassword,
+  ncaList,
+  company,
+  agentCode
 }
 
 extension KeyExtension on Keys {
@@ -19,8 +22,8 @@ extension KeyExtension on Keys {
     switch (this) {
       case Keys.roboUsername:
         return 'roboUsername';
-      case Keys.zKey:
-        return 'z_key';
+      case Keys.zToken:
+        return 'z_token';
       case Keys.contactList:
         return 'contactList';
       case Keys.groupName:
@@ -35,6 +38,12 @@ extension KeyExtension on Keys {
         return 'Third Eye Username';
       case Keys.tePassword:
         return 'Third Eye Password';
+      case Keys.ncaList:
+        return 'nca_list';
+      case Keys.company:
+        return 'company';
+      case Keys.agentCode:
+        return 'code';
       default:
         throw ArgumentError('Unknown key: $this');
     }

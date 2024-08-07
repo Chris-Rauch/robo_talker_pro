@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:robo_talker_pro/auxillary/error_popup.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
+import 'package:robo_talker_pro/auxillary/enums.dart';
 
 class NoCallAgreementView extends StatefulWidget {
   const NoCallAgreementView({super.key});
@@ -20,10 +22,12 @@ class NoCallAgreementViewState extends State<NoCallAgreementView> {
   @override
   void initState() {
     super.initState();
-    loadData('nca_list').then((value) {
-      setState(() {
-        items = value;
-      });
+    loadData(Keys.ncaList.toLocalizedString()).then((value) {
+      if (value != null) {
+        setState(() {
+          items = value; //TODO protect against unexpected values ie null
+        });
+      }
     });
   }
 
@@ -32,16 +36,19 @@ class NoCallAgreementViewState extends State<NoCallAgreementView> {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         allowMultiple: false,
         type: FileType.custom,
-        allowedExtensions: ['txt'],
+        allowedExtensions: ['txt', 'json'],
       );
 
       if ((result != null) && (result.files.single.path != null)) {
         //open the file
         File file = File(result.files.single.path!);
         String contents = file.readAsStringSync();
-        contents = contents.replaceAll('\r', '');
+        items = jsonDecode(contents);
+        if (true) {
+          
+        }
         setState(() {
-          items = contents.split('\n');
+          items = jsonDecode(contents);
         });
       } else {
         throw Exception('User Exited');
@@ -68,10 +75,13 @@ class NoCallAgreementViewState extends State<NoCallAgreementView> {
               labelText: "Company Name",
             ),
             onSubmitted: (value) {
+              //convert user input to JSON
+              Map<String, dynamic> jsonValue = jsonDecode(
+                  '{"company":"${value.split(':')[0]}","code":"${value.split(':')[1]}"}');
               // Check if the item already exists in the list
-              if (!items.contains(value)) {
+              if (!items.contains(jsonValue)) {
                 setState(() {
-                  items.insert(0, value);
+                  items.insert(0, jsonValue);
                   controller.clear();
                 });
               } else {
@@ -86,7 +96,13 @@ class NoCallAgreementViewState extends State<NoCallAgreementView> {
               itemCount: items.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  title: Text(items[index]),
+                  //TODO make the two tile views look better
+                  title: Row(
+                    children: [
+                      Text(items[index][Keys.company.toLocalizedString()]!),
+                      Text(items[index][Keys.agentCode.toLocalizedString()]!),
+                    ],
+                  ),
                   tileColor: selectedIndex == index ? Colors.blue : null,
                   onTap: () {
                     setState(() {
@@ -117,7 +133,7 @@ class NoCallAgreementViewState extends State<NoCallAgreementView> {
               ),
               FloatingActionButton(
                 onPressed: () {
-                  saveData('nca_list', items);
+                  saveData(Keys.ncaList.toLocalizedString(), items);
                 },
                 tooltip: 'Save',
                 child: const Icon(Icons.save),

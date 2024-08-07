@@ -4,6 +4,7 @@ import 'package:robo_talker_pro/auxillary/error_popup.dart';
 import 'package:robo_talker_pro/services/roboBloc/robo_bloc.dart';
 import 'package:robo_talker_pro/services/roboBloc/robo_event.dart';
 import 'package:robo_talker_pro/services/roboBloc/robo_state.dart';
+import 'package:robo_talker_pro/views/call_progress_view.dart';
 import 'package:robo_talker_pro/views/progress_view.dart';
 import 'package:intl/intl.dart';
 import '../auxillary/button_styles.dart';
@@ -84,7 +85,9 @@ class RoboInputViewState extends State<RoboInputView> {
           //TODO show summary of outbound calls
           context.read<RoboBloc>().add(RoboMultiJobEvent());
         } else if (state is RoboCallsActiveState) {
-          return const ProgressBarView();
+          return CallProgressView(
+            callEndTime: state.endtime,
+          );
         } else if (state is RoboLoadingState) {
           return const Center(child: CircularProgressIndicator());
         } else if (state is RoboErrorState) {
@@ -169,4 +172,26 @@ class RoboInputViewState extends State<RoboInputView> {
       ),
     );
   }
+}
+
+Widget _callsActive(String endTime) {
+  return Scaffold(
+    body: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'After the calls are finished I will start the memo\'s',
+            style: TextStyle(fontSize: 18),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Estimated Completion Time: $endTime',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    ),
+  );
 }
