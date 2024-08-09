@@ -77,9 +77,12 @@ class RoboBloc extends Bloc<RoboEvent, RoboState> {
         final url = roboServices.getUrl(multiJobPost);
         final header = await roboServices.getHeader();
         final body = await roboServices.getBody(multiJobPost);
-        final endTime = roboServices.getEndTime();
 
-        final http.Response response = await http.post(
+        //  print(url);
+        //  print(header);
+        //  print(body);
+
+        /*final http.Response response = await http.post(
           url,
           headers: header,
           body: body, // Encode the request body as JSON
@@ -93,10 +96,12 @@ class RoboBloc extends Bloc<RoboEvent, RoboState> {
           emit(RoboErrorState('Temporary redirect: HTTP Response 307'));
         } else if (response.statusCode == 401) {
           //TODO handle invalid login credentials
-          emit(RoboErrorState('Invalid login credentials: HTTP Response 401'));
-        } else {
-          emit(RoboErrorState('HTTP Response: ${response.statusCode}'));
-        }
+        } 
+        else {
+          print('${response.statusCode} ${response.headers} ${response.body}');
+          throw Exception(
+              '${response.statusCode} ${response.headers} ${response.body}');
+        }*/
       } catch (e) {
         emit(RoboErrorState(e));
       }
