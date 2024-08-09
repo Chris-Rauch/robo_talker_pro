@@ -3,23 +3,31 @@
 /// manages the state transitions accordingly.
 library file_event_bloc;
 
+import 'package:flutter/material.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 
 abstract class FileEvent {
   const FileEvent();
 }
 
-class SelectFileViewEvent extends FileEvent {
-  const SelectFileViewEvent();
+class InitializeProjectEvent extends FileEvent {}
+
+class ProjectSelectedEvent extends FileEvent {
+  final ProjectType projectType;
+  const ProjectSelectedEvent(this.projectType);
 }
 
-class PickFileEvent extends FileEvent {
-  const PickFileEvent();
+class FilePathSelectedEvent extends FileEvent {
+  final String? filePath;
+  final String? folderPath;
+  final ProjectType projectType;
+  const FilePathSelectedEvent(this.filePath, this.folderPath, this.projectType);
 }
 
-class PickFolderEvent extends FileEvent {
-  const PickFolderEvent();
-}
+
+
+
+
 
 class ReadFileEvent extends FileEvent {
   final String filePath;
@@ -35,3 +43,16 @@ class TriggerErrorEvent extends FileIoEvent {
   const TriggerErrorEvent(this.error);
 }
 */
+
+class PostJobEvent extends FileEvent {
+  final String jobName;
+  final DateTime startDate;
+  final TimeOfDay startTime;
+  final TimeOfDay stopTime;
+
+  PostJobEvent(
+      {required this.jobName,
+      required this.startDate,
+      required this.startTime,
+      required this.stopTime});
+}

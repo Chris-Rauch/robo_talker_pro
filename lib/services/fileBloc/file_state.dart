@@ -9,6 +9,8 @@
 /// as well as to handle potential errors during these operations.
 library file_state_bloc;
 
+import 'package:robo_talker_pro/auxillary/enums.dart';
+
 abstract class FileState {}
 
 class FileInitialState extends FileState {}
@@ -34,4 +36,22 @@ class FileReadSuccessState extends FileState {
 class FileErrorState extends FileState {
   final Object error;
   FileErrorState(this.error);
+}
+
+// =============================================================================
+class ChooseProjectState extends FileState {}
+
+class ChooseFilePathsState extends FileState {
+}
+
+class ChooseCallInfoState extends FileState {
+  String jobName;
+  ChooseCallInfoState(this.jobName);
+}
+
+class ProjectLoadingState extends FileState {}
+
+class ProjectErrorState extends FileState {
+  final Object error;
+  ProjectErrorState(this.error);
 }

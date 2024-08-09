@@ -14,7 +14,8 @@ enum Keys {
   tePassword,
   ncaList,
   company,
-  agentCode
+  agentCode,
+  projectType
 }
 
 extension KeyExtension on Keys {
@@ -25,7 +26,7 @@ extension KeyExtension on Keys {
       case Keys.zToken:
         return 'z_token';
       case Keys.contactList:
-        return 'contactList';
+        return 'contactlist';
       case Keys.groupName:
         return 'groupname';
       case Keys.startTime:
@@ -44,6 +45,8 @@ extension KeyExtension on Keys {
         return 'company';
       case Keys.agentCode:
         return 'code';
+      case Keys.projectType:
+        return 'projecttype';
       default:
         throw ArgumentError('Unknown key: $this');
     }

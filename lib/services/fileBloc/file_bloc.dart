@@ -4,6 +4,7 @@ import 'package:robo_talker_pro/auxillary/constants.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 import 'package:robo_talker_pro/services/fileBloc/file_services.dart';
+import 'package:robo_talker_pro/views/main_view/project_view.dart';
 import 'file_event.dart';
 import 'file_state.dart';
 import 'package:bloc/bloc.dart';
@@ -11,78 +12,92 @@ import 'package:path/path.dart' as p;
 
 class FileBloc extends Bloc<FileEvent, FileState> {
   FileBloc() : super(FileInitialState()) {
-    on<SelectFileViewEvent>((event, emit) async {
-      emit(FileInitialState());
+    on<InitializeProjectEvent>((event, emit) {
+      // pop up indicating lost progress
+      // reset .project.json data
+      emit(ChooseProjectState());
     });
 
-    //Update the UI with the selected file.
-    on<PickFileEvent>((event, emit) async {
-      try {
-        FilePickerResult? result = await FilePicker.platform.pickFiles(
-          allowMultiple: false,
-          type: FileType.custom,
-          allowedExtensions: ['xls', 'xlsx'],
-        );
+    on<ProjectSelectedEvent>((event, emit) {
+      if (event.projectType == ProjectType.latePayment) {
+        emit(ChooseFilePathsState()); //TODO include arguments in State
+      } else {
+        emit(ChooseFilePathsState());
+      }
+    });
 
-        if ((result != null) && (result.files.single.path != null)) {
-          emit(FilePickedSuccessState(result.files.single.path!));
+    on<FilePathSelectedEvent>((event, emit) async {
+      String? filePath = event.filePath;
+      String? folderPath = event.folderPath;
+      ProjectType projectType = event.projectType;
+
+      try {
+        // check user input
+        if (filePath == null || folderPath == null) {
+          // no input
+          throw Exception('Please make your selections');
+        } else if (!File(filePath).existsSync() ||
+            !Directory(folderPath).existsSync()) {
+          // input file moved
+          throw Exception('File or Directory does not exist');
+        }
+
+        // File Service object will handle all file operations
+        var fileServices = FileServices(filePath, folderPath);
+
+        // check to see if a project already exists
+        String projectFile = fileServices.getProjectFile;
+        if (File(projectFile).existsSync()) {
+          throw Exception('Project already exists in this directory');
         } else {
-          //emit(FileIoErrorState('User exited'));
+          PROJECT_DATA_PATH = projectFile;
         }
-      } catch (e) {
-        emit(FileErrorState(e));
-      }
-    });
 
-    on<PickFolderEvent>((event, emit) async {
-      try {
-        String? dirPath = await FilePicker.platform.getDirectoryPath();
-        if (dirPath != null) {
-          emit(FolderPickedSuccessState(dirPath));
+        // parse file
+        String contacts = '';
+        if (projectType == ProjectType.latePayment) {
+          contacts = await fileServices.handleLatePayment();
+
+          // save project type
+          await saveData(Keys.projectType.toLocalizedString(), 'Late Payment',
+              path: PROJECT_DATA_PATH);
         }
-      } catch (e) {
-        emit(FileErrorState(e));
-      }
-    });
 
-    on<ReadFileEvent>((event, emit) async {
-      emit(FileLoadingState());
-      String contactList = Keys.contactList.toLocalizedString();
-      PROJECT_DATA_PATH = p.join(event.folderPath, PROJECT_DATA_FILE_NAME);
-
-      try {
-        if (File(PROJECT_DATA_PATH!).existsSync()) {
-          throw Exception(
-              'A project already exists in this Folder. Please select a new folder');
-        }
-        FileServices fileServices =
-            FileServices(event.filePath, event.folderPath);
-        String contacts = await fileServices.handleLatePayment();
-
+        // save contacts
         if (contacts.isNotEmpty) {
-          await saveData(contactList, contacts, path: PROJECT_DATA_PATH);
-          emit(FileReadSuccessState(
-              contacts, p.join(event.folderPath, REPORT_FILE_NAME)));
+          String key = Keys.contactList.toLocalizedString();
+          await saveData(key, contacts, path: PROJECT_DATA_PATH);
         } else {
-          emit(FileErrorState('Something went wrong. Contact list is empty'));
+          throw Exception('Late Payment Report is empty');
         }
+
+        // move to Call Info View
+        String jobName = fileServices.getGroupName();
+        emit(ChooseCallInfoState(jobName));
       } catch (e) {
         if (e == PathAccessException) {
-          emit(FileErrorState(
+          emit(ProjectErrorState(
               'The file you selected is already open. Close it and try again'));
-        } else if (e == PathAccessException) {
-          emit(FileErrorState(
+        } /*else if (e == PathAccessException) {
+          emit(ProjectErrorState(
               '$e Something might be wrong with the file format'));
-        } else {
-          emit(FileErrorState(e));
+        } */
+        else {
+          emit(ProjectErrorState(e));
         }
       }
     });
 
-/*
-    on<TriggerErrorEvent>((event, emit) {
-      emit(FileIoErrorState(event.error));
+    on<PostJobEvent>((event, emit) {
+      // check inputs
+        /* Make sure time is NOT at night
+           time cant be in the past
+           if it's during working hours and not at lunch, warn user
+        */
+
+      // post to RoboTalker API
+
+           
     });
-    */
   }
 }

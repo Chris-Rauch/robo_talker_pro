@@ -6,7 +6,7 @@ SnackBar customSnackBar(BuildContext context, String errorMessage) {
     content: Text(errorMessage),
     backgroundColor: Colors.red,
     duration:
-        const Duration(seconds: 3), // Duration the SnackBar should be visible
+        const Duration(seconds: 5), // Duration the SnackBar should be visible
   );
 }
 

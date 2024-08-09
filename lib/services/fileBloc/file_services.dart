@@ -14,14 +14,16 @@ import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 
 class FileServices {
-  final Excel _latePaymentFile;
-  final Excel _reportFile;
+  final Excel _latePaymentFile; // user provided file
+  final Excel _reportFile; // contains no nums and duplicate nums
   final String _reportFileLocation;
+  final String _projectFile;
 
   FileServices(String filePath, String folderPath)
       : _latePaymentFile = Excel.decodeBytes(File(filePath).readAsBytesSync()),
         _reportFile = Excel.createExcel(),
-        _reportFileLocation = p.join(folderPath, REPORT_FILE_NAME) {
+        _reportFileLocation = p.join(folderPath, REPORT_FILE_NAME),
+        _projectFile = p.join(folderPath, PROJECT_DATA_FILE_NAME) {
     //look for input errors
     if (!File(filePath).existsSync()) {
       throw ArgumentError(
@@ -38,6 +40,7 @@ class FileServices {
   /// Returns a list of 'contacts' in json format. This is used for REST post.
   /// Removes contacts that are on the No Call Agreement and bad numbers to
   /// a report file located in 'folderPath.'
+  /// @throws - Incorrect sheet name,
   Future<String> handleLatePayment() async {
     List<Map<String, dynamic>> contactList = [];
     String groupname = getGroupName();
@@ -50,27 +53,31 @@ class FileServices {
         path: PROJECT_DATA_PATH);
 
     //traverse excel file looking for NCA's and bad phone #'s
+    outerLoop: // columns
     for (int x = 2; x < sheet.rows.length; ++x) {
       bool createContact = true;
       var row = sheet.rows[x];
-      innerLoop:
+      innerLoop: // rows
       for (var cell in row) {
         int? columnIndex = cell?.columnIndex;
-        //Agent Name
+
+        //Agent Name at column 0
         if (columnIndex == 0) {
+          createContact = true;
           if (await _noCallAgreement(company: cell?.value.toString())) {
             createContact = false;
             _writeRowToFile(row);
             break innerLoop;
-          } else {
-            createContact == true;
-          }
+          } 
         }
+
         //Agent Code
         if (columnIndex == 1) {
         }
+        
         //Phone number
         else if (columnIndex == 5) {
+          createContact = true;
           if (_noNumber(cell?.value.toString())) {
             createContact = false;
             _writeRowToFile(row);
@@ -78,8 +85,6 @@ class FileServices {
           } else if (await _isDuplicate(row, contactList)) {
             createContact = false;
             break innerLoop;
-          } else {
-            createContact == true;
           }
         }
       }
@@ -96,6 +101,7 @@ class FileServices {
           'groupname': groupname,
         });
       }
+
     }
     return json.encode(contactList);
   }
@@ -113,6 +119,10 @@ class FileServices {
     } else {
       return '';
     }
+  }
+
+  String get getProjectFile {
+    return _projectFile;
   }
 
   ///Remove dollar signs. This is because of how robotalker.com reads them.
