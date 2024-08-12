@@ -6,9 +6,9 @@ import 'package:intl/intl.dart';
 import 'package:robo_talker_pro/auxillary/button_styles.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/error_popup.dart';
-import 'package:robo_talker_pro/services/fileBloc/file_bloc.dart';
-import 'package:robo_talker_pro/services/fileBloc/file_event.dart';
-import 'package:robo_talker_pro/services/fileBloc/file_state.dart';
+import 'package:robo_talker_pro/services/projectBloc/project_bloc.dart';
+import 'package:robo_talker_pro/services/projectBloc/project_event.dart';
+import 'package:robo_talker_pro/services/projectBloc/project_state.dart';
 import 'package:robo_talker_pro/views/main_view/main_view.dart';
 import 'package:path/path.dart' as p;
 
@@ -38,18 +38,17 @@ class ProjectViewState extends State<ProjectView> {
   }
   */
 
-  // === UI Elements ===========================================================
+  // === build =================================================================
   // ===========================================================================
   @override
-  //TODO fix the issue when user clicks different view mid project
   Widget build(BuildContext context) {
-    return BlocListener<FileBloc, FileState>(
+    return BlocListener<ProjectBloc, ProjectState>(
       listener: (context, state) {
         if (state is ProjectErrorState) {
           showSnackBarAfterBuild(context, state.error);
         }
       },
-      child: BlocBuilder<FileBloc, FileState>(
+      child: BlocBuilder<ProjectBloc, ProjectState>(
         builder: (context, state) {
           if (state is ChooseProjectState) {
             currentWidget = _chooseProjectUI(context);
@@ -60,25 +59,30 @@ class ProjectViewState extends State<ProjectView> {
             currentWidget = _chooseCallInfoUI(context);
           } else if (state is ProjectLoadingState) {
             currentWidget = _loadingUI();
+          } else if (state is PollingResourceState) {
+            currentWidget = _waitingUI(context, state.estimatedCompletionTime);
+          } else if (state is ProgressState) {
+            currentWidget = _progressBarUI(context, state.progress);
           } else if (state is ProjectErrorState) {
-            // 'skip' the rebuild process for the snack bar
+            // 'skip' the rebuild process to show error to user
           } else {
-            currentWidget = _chooseProjectUI(
-                context); //On start up when a state hasn't been set
+            // when ProjectView is opened for the first time
+            currentWidget = _chooseProjectUI(context);
           }
-          return currentWidget ?? Container();
+          return currentWidget ?? _chooseProjectUI(context);
         },
       ),
     );
   }
 
+  // === UI Elements ===========================================================
+  // ===========================================================================
   Widget _chooseProjectUI(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _buildButton('Late Payment', () {
-            //_startProject(context, ProjectType.latePayment);
             _goNext(
                 context, const ProjectSelectedEvent(ProjectType.latePayment));
             _projectType = ProjectType.latePayment;
@@ -162,9 +166,6 @@ class ProjectViewState extends State<ProjectView> {
               decoration: const InputDecoration(
                 hintText: "Job Name",
               ),
-              /*onEditingComplete: () {
-                context.read<RoboBloc>().add(RoboSubmitJobEvent(_jobName.text));
-              },*/
             ),
             const SizedBox(height: 16),
             Row(
@@ -231,10 +232,42 @@ class ProjectViewState extends State<ProjectView> {
     );
   }
 
+  Widget _waitingUI(BuildContext context, DateTime displayTime) {
+    return const Scaffold();
+  }
+
+  Widget _progressBarUI(BuildContext context, double progress) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: LinearProgressIndicator(
+            value: progress, // A value between 0.0 and 1.0
+            backgroundColor: Colors.grey.shade300,
+            color: Colors.green,
+            minHeight: 12.0,
+          ),
+        ),
+        const SizedBox(height: 20.0),
+        ElevatedButton(
+          onPressed: () {
+            setState(() {
+              progress += 0.1;
+              if (progress > 1.0) {
+                progress = 0.0;
+              }
+            });
+          },
+          child: const Text('Increase Progress'),
+        ),
+      ],
+    );
+  }
+
   Widget _loadingUI() {
     return const Center(child: CircularProgressIndicator());
   }
-  // === End of UI Elements ====================================================
 
   // === Functions =============================================================
   // ===========================================================================
@@ -304,18 +337,17 @@ class ProjectViewState extends State<ProjectView> {
     }
   }
 
-  void _goNext(BuildContext context, FileEvent event) {
-    context.read<FileBloc>().add(event);
+  void _goNext(BuildContext context, ProjectEvent event) {
+    context.read<ProjectBloc>().add(event);
   }
 
   void _postCallData(BuildContext context) {
-    context.read<FileBloc>().add(PostJobEvent(
+    context.read<ProjectBloc>().add(PostJobEvent(
         jobName: _jobName.text,
         startDate: _startDate,
         startTime: _startTime,
         stopTime: _stopTime));
   }
-  // === End of Functions ======================================================
 
   // Builds a generic looking button
   Widget _buildButton(String label, VoidCallback onPressed) {

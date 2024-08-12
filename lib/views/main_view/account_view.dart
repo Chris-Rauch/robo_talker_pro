@@ -15,6 +15,7 @@ class AccountViewState extends State<AccountView> {
   final _callerIdController = TextEditingController();
   final _teUsernameController = TextEditingController();
   final _tePwordController = TextEditingController();
+  String? callUnits;
 
   @override
   void initState() {
@@ -52,55 +53,81 @@ class AccountViewState extends State<AccountView> {
         //height: 100,
         alignment: Alignment.center,
         padding: const EdgeInsets.all(15),
-        child: Column(
+        child: Row(
           children: [
-            const Text(
-              'Robo Talker',
-              style: TextStyle(
-                fontSize: 28.10,
-              ),
+            Column(
+              children: [
+                const Text(
+                  'Robo Talker',
+                  style: TextStyle(
+                    fontSize: 28.10,
+                  ),
+                ),
+                TextField(
+                  controller: _roboUsernameController,
+                  decoration: const InputDecoration(
+                    hintText: 'Username',
+                  ),
+                ),
+                TextField(
+                  controller: _roboKeyController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    hintText: 'API Key',
+                  ),
+                ),
+                TextField(
+                  controller: _callerIdController,
+                  decoration: const InputDecoration(
+                    hintText: 'Caller ID',
+                  ),
+                ),
+                const Text('Call Units:'),
+                Row(
+                  children: [
+                    ElevatedButton(
+                      child: const Text('Change your voice message'),
+                      onPressed: () {},
+                    ),
+                    const Spacer(),
+                    ElevatedButton(
+                      child: const Text('Buy more units'),
+                      onPressed: () {},
+                    ),
+                  ],
+                )
+              ],
             ),
-            TextField(
-              controller: _roboUsernameController,
-              decoration: const InputDecoration(
-                hintText: 'Username',
-              ),
-            ),
-            TextField(
-              controller: _roboKeyController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                hintText: 'Z Key',
-              ),
-            ),
-            TextField(
-              controller: _callerIdController,
-              decoration: const InputDecoration(
-                hintText: 'Caller ID',
-              ),
-            ),
-            const Text(
-              'Third Eye',
-              style: TextStyle(
-                fontSize: 28.10,
-              ),
-            ),
-            TextField(
-              controller: _teUsernameController,
-              decoration: const InputDecoration(
-                hintText: 'Username',
-              ),
-            ),
-            TextField(
-              controller: _tePwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                hintText: 'Password',
-              ),
-            ),
-            FloatingActionButton(
-              onPressed: _save,
-              child: const Text('Save'),
+            Column(
+              children: [
+                const Text(
+                  'Third Eye',
+                  style: TextStyle(
+                    fontSize: 28.10,
+                  ),
+                ),
+                TextField(
+                  controller: _teUsernameController,
+                  decoration: const InputDecoration(
+                    hintText: 'Username',
+                  ),
+                ),
+                TextField(
+                  controller: _tePwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Password',
+                  ),
+                ),
+                FloatingActionButton(
+                  onPressed: (){},
+                  child: const Text('Change memo'),
+                ),
+                FloatingActionButton(
+                  onPressed: _save,
+                  child: const Text('Save'),
+                ),
+              ],
             ),
           ],
         ),

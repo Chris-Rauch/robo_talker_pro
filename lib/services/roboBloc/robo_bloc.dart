@@ -1,3 +1,5 @@
+/*
+
 /// Manages user inputs and integrates data with robotalker.com REST API
 library robo_bloc;
 
@@ -108,3 +110,5 @@ class RoboBloc extends Bloc<RoboEvent, RoboState> {
     });
   }
 }
+
+*/

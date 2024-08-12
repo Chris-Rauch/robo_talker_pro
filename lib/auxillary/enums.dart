@@ -2,6 +2,8 @@ enum ProjectType { latePayment, returnMail }
 
 enum RequestType { multiJobPost }
 
+enum Update { chrome, chromium, software }
+
 enum Keys {
   roboUsername,
   zToken,
@@ -15,7 +17,8 @@ enum Keys {
   ncaList,
   company,
   agentCode,
-  projectType
+  projectType,
+  jobID
 }
 
 extension KeyExtension on Keys {
@@ -47,6 +50,8 @@ extension KeyExtension on Keys {
         return 'code';
       case Keys.projectType:
         return 'projecttype';
+      case Keys.jobID:
+        return 'jobid';
       default:
         throw ArgumentError('Unknown key: $this');
     }

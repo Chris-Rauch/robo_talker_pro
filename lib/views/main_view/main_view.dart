@@ -36,7 +36,7 @@ class MainViewState extends State<MainView> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            label: 'Accounts',
+            label: 'Account',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.file_open),
