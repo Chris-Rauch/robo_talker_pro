@@ -1,8 +1,23 @@
 /// File Services class handles the Late Payment Report provided by the user.
-/// It is responsible for parsing through the file and creating a list of 
-/// contacts for a Robo Talker job. It also removes contacts that are apart of
-/// the 'No Call Agreement' and contacts that have no number. It writes them 
-/// to a report.xlsx file located in the folder specified by the user.
+/// It is mainly responsible for the following:
+///   1) Checking for good input (i.e the file exists)
+///   2) Reading the file and returning a list of contacts
+///     a. contactList is returned in JSON format
+///       ex. [{
+///             "name":"Chris",
+///             "phone":"7143290331",
+///             "var1":"Agent Name",
+///             "var2":"1283.51",
+///             "var3":"Jun 3, 2024",
+///             "var4":"M W F 1 0 0 0 0 0",
+///             "groupname":"LP 10/14/2000 to 10/14/2000"
+///           }]
+///     b. Contacts with no phone number are skipped
+///     c. Contacts that are apart of GAAC's no call agreement are skipped
+///   3) Skipped contacts are annotated/written to the report file
+///     a. FileServices class will put this report in a file located in the
+///        folder specified by the user
+///
 library file_servies;
 
 import 'dart:convert';
@@ -19,23 +34,25 @@ class FileServices {
   final Excel _latePaymentFile; // user provided file
   final Excel _reportFile; // contains no nums and duplicate nums
   final String _reportFileLocation;
-  final String _projectFile;
+  final String _projectFileLocation;
 
   FileServices(String filePath, String folderPath)
       : _latePaymentFile = Excel.decodeBytes(File(filePath).readAsBytesSync()),
         _reportFile = Excel.createExcel(),
         _reportFileLocation = p.join(folderPath, REPORT_FILE_NAME),
-        _projectFile = p.join(folderPath, PROJECT_DATA_FILE_NAME) {
+        _projectFileLocation = p.join(folderPath, PROJECT_DATA_FILE_NAME) {
     //look for input errors
     if (!File(filePath).existsSync()) {
       throw ArgumentError(
           'This file doesn\'t exist. Was it moved? -> $filePath');
     } else if (p.extension(filePath) == '.xls') {
       throw ArgumentError(
-          'Excel file outdate. Make sure the file extension is .xlsx (Excel 2007 or newer)');
+          'Make sure the file extension is .xlsx (Excel 2007 or newer)');
     } else if (p.extension(filePath) != '.xlsx') {
       throw ArgumentError(
           'Invalid File Type. Make sure the file extension is .xlsx');
+    } else if (File(_projectFileLocation).existsSync()) {
+      throw Exception('Project already exists in this directory');
     }
   }
 
@@ -51,7 +68,7 @@ class FileServices {
     Sheet sheet = _latePaymentFile[sheetName];
 
     //save job name to project data file
-    saveData(Keys.groupName.toLocalizedString(), groupname,
+    await saveData(Keys.groupName.toLocalizedString(), groupname,
         path: PROJECT_DATA_PATH);
 
     //traverse excel file looking for NCA's and bad phone #'s
@@ -70,13 +87,13 @@ class FileServices {
             createContact = false;
             _writeRowToFile(row);
             break innerLoop;
-          } 
+          }
         }
 
         //Agent Code
         if (columnIndex == 1) {
         }
-        
+
         //Phone number
         else if (columnIndex == 5) {
           createContact = true;
@@ -103,7 +120,6 @@ class FileServices {
           'groupname': groupname,
         });
       }
-
     }
     return json.encode(contactList);
   }
@@ -123,8 +139,12 @@ class FileServices {
     }
   }
 
-  String get getProjectFile {
-    return _projectFile;
+  /// Returns the file path to the project file as a string.
+  ///
+  /// Returns:
+  /// - `String?`: The path to the project file.
+  String get getProjectFileLocation {
+    return _projectFileLocation;
   }
 
   ///Remove dollar signs. This is because of how robotalker.com reads them.

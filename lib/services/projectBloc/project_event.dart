@@ -9,6 +9,7 @@ import 'package:robo_talker_pro/auxillary/enums.dart';
 abstract class ProjectEvent {
   const ProjectEvent();
 }
+
 // Emitted on start-up
 class InitializeProjectEvent extends ProjectEvent {}
 
@@ -29,12 +30,8 @@ class FilePathSelectedEvent extends ProjectEvent {
 // Emmited after user provides job information
 class PostJobEvent extends ProjectEvent {
   final String jobName;
-  final DateTime startDate;
-  final TimeOfDay startTime;
-  final TimeOfDay stopTime;
+  final DateTime startTime;
+  final DateTime endTime;
   PostJobEvent(
-      {required this.jobName,
-      required this.startDate,
-      required this.startTime,
-      required this.stopTime});
+      {required this.jobName, required this.startTime, required this.endTime});
 }

@@ -1,5 +1,5 @@
+import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:robo_talker_pro/auxillary/constants.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
@@ -25,63 +25,51 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       }
     });
 
+    /// The user has chosen a Late Payment File and a directory for the 
+    /// project. Parse the file to get contact info and save necessary data
+    /// for the project.
     on<FilePathSelectedEvent>((event, emit) async {
       String? filePath = event.filePath;
       String? folderPath = event.folderPath;
       ProjectType projectType = event.projectType;
+      String contacts = '';
 
       try {
         // check user input
         if (filePath == null || folderPath == null) {
-          // no input
           throw Exception('Please make your selections');
-        } else if (!File(filePath).existsSync() ||
-            !Directory(folderPath).existsSync()) {
-          // input file moved
-          throw Exception('File or Directory does not exist');
         }
 
         // File Service object will handle all file operations
         var fileServices = FileServices(filePath, folderPath);
 
-        // check to see if a project already exists
-        String projectFile = fileServices.getProjectFile;
-        if (File(projectFile).existsSync()) {
-          throw Exception('Project already exists in this directory');
-        } else {
-          PROJECT_DATA_PATH = projectFile;
-        }
-
         // parse file
-        String contacts = '';
+        String projectTypeAsString = '';
         if (projectType == ProjectType.latePayment) {
           contacts = await fileServices.handleLatePayment();
-
-          // save project type
-          await saveData(Keys.projectType.toLocalizedString(), 'Late Payment',
-              path: PROJECT_DATA_PATH);
+          projectTypeAsString = 'Late Payment';
+        } else if (projectType == ProjectType.returnMail) {
+          // call python process
+          projectTypeAsString = 'Return Mail';
         }
 
-        // save contacts
-        if (contacts.isNotEmpty) {
-          String key = Keys.contactList.toLocalizedString();
-          await saveData(key, contacts, path: PROJECT_DATA_PATH);
-        } else {
-          throw Exception('Late Payment Report is empty');
-        }
-
-        // move to Call Info View
+        // save contacts, groupName and project type
         String jobName = fileServices.getGroupName();
+        String key = Keys.contactList.toLocalizedString();
+        await saveData(key, contacts, path: PROJECT_DATA_PATH);
+        key = Keys.groupName.toLocalizedString();
+        await saveData(key, jobName, path: PROJECT_DATA_PATH);
+        key = Keys.projectType.toLocalizedString();
+        await saveData(key, projectTypeAsString, path: PROJECT_DATA_PATH);
+
+        // set global variable
+        PROJECT_DATA_PATH = fileServices.getProjectFileLocation;
+
         emit(ChooseCallInfoState(jobName));
       } catch (e) {
         if (e == PathAccessException) {
-          emit(ProjectErrorState(
-              'The file you selected is already open. Close it and try again'));
-        } /*else if (e == PathAccessException) {
-          emit(ProjectErrorState(
-              '$e Something might be wrong with the file format'));
-        } */
-        else {
+          emit(ProjectErrorState('The file you selected is already open.'));
+        } else {
           emit(ProjectErrorState(e));
         }
       }
@@ -89,44 +77,53 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
 
     on<PostJobEvent>((event, emit) async {
       String jobName = event.jobName;
-      DateTime startDate = event.startDate;
-      TimeOfDay startTime = event.startTime;
-      TimeOfDay endTime = event.stopTime;
-      String contacts = await loadData(Keys.contactList.toLocalizedString(),
-          path: PROJECT_DATA_PATH);
+      DateTime startDate = event.startTime;
+      DateTime endDate = event.endTime;
 
       try {
-        RoboServices job = RoboServices(event.jobName, event.startDate,
-            event.stopTime, LATE_PAYMENT_MESSAGE, contacts);
+        RoboServices job = RoboServices(jobName, startDate, endDate);
+        String headerAsString = jsonEncode(await job.getHeaders());
+        String bodyAsString =
+            jsonEncode(await job.getBody(RequestType.multiJobPost));
+        String url = job.getUrl(RequestType.multiJobPost).toString();
+
+        // save new data
+        saveData(Keys.groupName.toLocalizedString(), jobName,
+            path: PROJECT_DATA_PATH);
 
         // TODO this is going to be dependent on the user's $PATH variable (maybe python.exe too...)
         // post to RoboTalker website
-        Process process =
-            await Process.start('python', ['path/to/file', job.url]);
+        Process process = await Process.start('python', [
+          '/lib/scripts/request.py',
+          'POST',
+          url,
+          headerAsString,
+          bodyAsString
+        ]);
         int exitCode = await process.exitCode;
         if (exitCode == 0) {
           emit(
             // Bloc will build a widget telling the user to wait for calls to finish
-            PollingResourceState(
-              DateTime(
-                startDate.year,
-                startDate.month,
-                startDate.day,
-                endTime.hour,
-                endTime.minute,
-              ),
-            ),
+            PollingResourceState(endDate),
           );
-        } else if (exitCode == -1) {
+        } else {
           throw Exception('Could not post job to RoboTalker website');
         }
 
         // get request to RoboTalker (wait for calls to finish and grab their info)
-        process = await Process.start('python', ['path/to/file', 'get method']);
+        process = await Process.start('python', [
+          '/lib/scripts/request.py',
+          'GET',
+          job.getUrl(RequestType.jobDetails).toString()
+        ]);
+        // Status code: 200
+        // Response: No record found.
         exitCode = await process.exitCode;
 
         // start memo'ing accounts
-        process = await Process.start('python', ['memo_accounts.py']);
+        process = await Process.start('python', [
+          '/lib/scripts/request.py',
+        ]);
         await for (final output in process.stdout) {
           if (output.length == 1) {
             int percentComplete = output.first;

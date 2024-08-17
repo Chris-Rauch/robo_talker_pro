@@ -1,6 +1,5 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:robo_talker_pro/auxillary/button_styles.dart';
@@ -9,7 +8,6 @@ import 'package:robo_talker_pro/auxillary/error_popup.dart';
 import 'package:robo_talker_pro/services/projectBloc/project_bloc.dart';
 import 'package:robo_talker_pro/services/projectBloc/project_event.dart';
 import 'package:robo_talker_pro/services/projectBloc/project_state.dart';
-import 'package:robo_talker_pro/views/main_view/main_view.dart';
 import 'package:path/path.dart' as p;
 
 class ProjectView extends StatefulWidget {
@@ -24,10 +22,11 @@ class ProjectViewState extends State<ProjectView> {
   final _jobName = TextEditingController();
   final _filePath = TextEditingController();
   final _folderPath = TextEditingController();
-  ProjectType? _projectType;
+  ProjectType _projectType = ProjectType.latePayment;
   TimeOfDay _startTime = const TimeOfDay(hour: 12, minute: 15);
   TimeOfDay _stopTime = const TimeOfDay(hour: 12, minute: 30);
   DateTime _startDate = DateTime.now();
+  DateTime _stopDate = DateTime.now();
   Widget? currentWidget;
 
 /*
@@ -63,6 +62,9 @@ class ProjectViewState extends State<ProjectView> {
             currentWidget = _waitingUI(context, state.estimatedCompletionTime);
           } else if (state is ProgressState) {
             currentWidget = _progressBarUI(context, state.progress);
+          } else if (state is PollingResourceState) {
+            currentWidget =
+                _pollingResourceUI(context, state.estimatedCompletionTime);
           } else if (state is ProjectErrorState) {
             // 'skip' the rebuild process to show error to user
           } else {
@@ -82,17 +84,23 @@ class ProjectViewState extends State<ProjectView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildButton('Late Payment', () {
-            _goNext(
-                context, const ProjectSelectedEvent(ProjectType.latePayment));
-            _projectType = ProjectType.latePayment;
-          }),
+          ElevatedButton(
+            child: const Text('Late Payment'),
+            onPressed: () {
+              _goNext(
+                  context, const ProjectSelectedEvent(ProjectType.latePayment));
+              _projectType = ProjectType.latePayment;
+            },
+          ),
           const SizedBox(height: 20),
-          _buildButton('Return Mail', () {
-            _goNext(
-                context, const ProjectSelectedEvent(ProjectType.returnMail));
-            _projectType = ProjectType.returnMail;
-          }),
+          ElevatedButton(
+            child: const Text('Return Mail'),
+            onPressed: () {
+              _goNext(
+                  context, const ProjectSelectedEvent(ProjectType.returnMail));
+              _projectType = ProjectType.returnMail;
+            },
+          ),
         ],
       ),
     );
@@ -109,18 +117,20 @@ class ProjectViewState extends State<ProjectView> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildButton("Select File", () {
-              _selectFile(context);
-            }),
+            ElevatedButton(
+              onPressed: () => _selectFile(context),
+              child: const Text('Select File'),
+            ),
             const SizedBox(height: 16),
             Text(
               _filePath.text,
               style: const TextStyle(fontSize: 18),
               textAlign: TextAlign.center,
             ),
-            _buildButton("Select Folder", () {
-              _selectFolder(context);
-            }),
+            ElevatedButton(
+              onPressed: () => _selectFolder(context),
+              child: const Text('Select Folder'),
+            ),
             const SizedBox(height: 16),
             Text(
               _folderPath.text,
@@ -132,16 +142,15 @@ class ProjectViewState extends State<ProjectView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton(
-                  onPressed: () => _goNext(context, InitializeProjectEvent()),
                   child: const Text("Back"),
+                  onPressed: () => _goNext(context, InitializeProjectEvent()),
                 ),
                 ElevatedButton(
-                  style: enabledButtonStyle,
+                  child: const Text('Next'),
                   onPressed: () => _goNext(
                       context,
                       FilePathSelectedEvent(
-                          _filePath.text, _folderPath.text, _projectType!)),
-                  child: const Text('Next'),
+                          _filePath.text, _folderPath.text, _projectType)),
                 ),
               ],
             ),
@@ -210,18 +219,21 @@ class ProjectViewState extends State<ProjectView> {
                   style: enabledButtonStyle,
                   onPressed: () => _goNext(
                     context,
-                    PostJobEvent(
-                        jobName: _jobName.text,
-                        startDate: _startDate,
-                        startTime: _startTime,
-                        stopTime: _stopTime),
+                    ProjectSelectedEvent(_projectType),
                   ),
                   child: const Text('Back'),
                 ),
                 const Spacer(),
                 ElevatedButton(
                   style: enabledButtonStyle,
-                  onPressed: () => _postCallData(context),
+                  onPressed: () => _goNext(
+                    context,
+                    PostJobEvent(
+                      jobName: _jobName.text,
+                      startTime: _startDate,
+                      endTime: _stopDate,
+                    ),
+                  ),
                   child: const Text('Next'),
                 ),
               ],
@@ -262,6 +274,17 @@ class ProjectViewState extends State<ProjectView> {
           child: const Text('Increase Progress'),
         ),
       ],
+    );
+  }
+
+  Widget _pollingResourceUI(BuildContext context, DateTime endDate) {
+    String formattedTime = _formatDateTime(endDate);
+    return Center(
+      child: Text(
+        'Calls have been sent. Expected to finish at: $formattedTime',
+        style: const TextStyle(fontSize: 18),
+        textAlign: TextAlign.center,
+      ),
     );
   }
 
@@ -308,7 +331,8 @@ class ProjectViewState extends State<ProjectView> {
     );
     if (pickedDate != null) {
       setState(() {
-        _startDate = pickedDate;
+        _startDate = DateTime(pickedDate.year, pickedDate.month, pickedDate.day,
+            _startDate.hour, _startDate.minute);
       });
     }
   }
@@ -323,6 +347,10 @@ class ProjectViewState extends State<ProjectView> {
       setState(() {
         if (isStartTime) {
           _startTime = pickedTime;
+          _startDate = DateTime(_startDate.year, _startDate.month,
+              _startDate.day, _startTime.hour, _startTime.minute);
+
+          // automatically select an end time 15 minutes after start time
           if (_startTime.minute < 45) {
             _stopTime = TimeOfDay(
                 hour: pickedTime.hour, minute: (pickedTime.minute + 15));
@@ -332,6 +360,8 @@ class ProjectViewState extends State<ProjectView> {
           }
         } else {
           _stopTime = pickedTime;
+          _stopDate = DateTime(_stopDate.year, _stopDate.month, _stopDate.day,
+              _stopTime.hour, _stopTime.minute);
         }
       });
     }
@@ -341,19 +371,10 @@ class ProjectViewState extends State<ProjectView> {
     context.read<ProjectBloc>().add(event);
   }
 
-  void _postCallData(BuildContext context) {
-    context.read<ProjectBloc>().add(PostJobEvent(
-        jobName: _jobName.text,
-        startDate: _startDate,
-        startTime: _startTime,
-        stopTime: _stopTime));
+  String _formatDateTime(DateTime dateTime) {
+    // You can use any formatting package like intl to format the date
+    return '${dateTime.toLocal()}'
+        .split(' ')[0]; // Adjust this formatting as needed
   }
-
-  // Builds a generic looking button
-  Widget _buildButton(String label, VoidCallback onPressed) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      child: Text(label),
-    );
-  }
+  
 }

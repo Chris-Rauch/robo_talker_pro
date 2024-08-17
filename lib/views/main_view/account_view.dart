@@ -50,84 +50,152 @@ class AccountViewState extends State<AccountView> {
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        //height: 100,
         alignment: Alignment.center,
         padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.grey[200], // Background color for the container
+          borderRadius: BorderRadius.circular(10), // Rounded corners
+        ),
         child: Row(
           children: [
-            Column(
-              children: [
-                const Text(
-                  'Robo Talker',
-                  style: TextStyle(
-                    fontSize: 28.10,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Robo Talker',
+                    /*style: TextStyle(
+                      fontSize: 28.10,
+                      fontWeight: FontWeight.bold, // Make the text bold
+                      color: Colors.blue, // Add color to the text
+                    ),*/
                   ),
-                ),
-                TextField(
-                  controller: _roboUsernameController,
-                  decoration: const InputDecoration(
-                    hintText: 'Username',
-                  ),
-                ),
-                TextField(
-                  controller: _roboKeyController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    hintText: 'API Key',
-                  ),
-                ),
-                TextField(
-                  controller: _callerIdController,
-                  decoration: const InputDecoration(
-                    hintText: 'Caller ID',
-                  ),
-                ),
-                const Text('Call Units:'),
-                Row(
-                  children: [
-                    ElevatedButton(
-                      child: const Text('Change your voice message'),
-                      onPressed: () {},
+                  const SizedBox(height: 20), // Add space between elements
+                  TextField(
+                    controller: _roboUsernameController,
+                    decoration: const InputDecoration(
+                      hintText: 'Username',
+                      filled: true,
+                      fillColor:
+                          Colors.white, // Background color for the TextField
+                      border:
+                          OutlineInputBorder(), // Add a border to the TextField
                     ),
-                    const Spacer(),
-                    ElevatedButton(
-                      child: const Text('Buy more units'),
-                      onPressed: () {},
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _roboKeyController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      hintText: 'API Key',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(),
                     ),
-                  ],
-                )
-              ],
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _callerIdController,
+                    decoration: const InputDecoration(
+                      hintText: 'Caller ID',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      const Text(
+                        'Call Units:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        callUnits ?? '0', // Display the dynamic value
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red, // Color for the call units text
+                        ),
+                      ),
+                      const Spacer(),
+                      ElevatedButton(
+                        /*
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue, // Button color
+                        ),*/
+                        child: const Text('Buy more units'),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    /*
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green, // Button color
+                    ),*/
+                    child: const Text('Change your voice message'),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
             ),
-            Column(
-              children: [
-                const Text(
-                  'Third Eye',
-                  style: TextStyle(
-                    fontSize: 28.10,
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Third Eye',
+                    style: TextStyle(
+                      fontSize: 28.10,
+                      fontWeight: FontWeight.bold,
+                      //color: Colors.blue,
+                    ),
                   ),
-                ),
-                TextField(
-                  controller: _teUsernameController,
-                  decoration: const InputDecoration(
-                    hintText: 'Username',
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _teUsernameController,
+                    decoration: const InputDecoration(
+                      hintText: 'Username',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(),
+                    ),
                   ),
-                ),
-                TextField(
-                  controller: _tePwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    hintText: 'Password',
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _tePwordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      hintText: 'Password',
+                      filled: true,
+                      //fillColor: Colors.white,
+                      border: OutlineInputBorder(),
+                    ),
                   ),
-                ),
-                FloatingActionButton(
-                  onPressed: (){},
-                  child: const Text('Change memo'),
-                ),
-                FloatingActionButton(
-                  onPressed: _save,
-                  child: const Text('Save'),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    /*
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange, // Button color
+                    ),*/
+                    child: const Text('Change memo'),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 20),
+            FloatingActionButton(
+              /*backgroundColor: Colors.red, */ // Floating button color
+              onPressed: _save,
+              child: const Icon(Icons.save), // Change text to save icon
             ),
           ],
         ),

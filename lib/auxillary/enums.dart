@@ -1,6 +1,6 @@
 enum ProjectType { latePayment, returnMail }
 
-enum RequestType { multiJobPost }
+enum RequestType { multiJobPost , jobDetails }
 
 enum Update { chrome, chromium, software }
 
@@ -18,7 +18,8 @@ enum Keys {
   company,
   agentCode,
   projectType,
-  jobID
+  jobID,
+  jobName
 }
 
 extension KeyExtension on Keys {
