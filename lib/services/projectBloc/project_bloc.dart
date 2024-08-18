@@ -75,6 +75,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       }
     });
 
+    /// All necessary information has been received. Make HTTP request
     on<PostJobEvent>((event, emit) async {
       String jobName = event.jobName;
       DateTime startDate = event.startTime;
