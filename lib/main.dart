@@ -46,7 +46,8 @@ class MyApp extends StatelessWidget {
           onSecondary: const Color.fromARGB(
               255, 255, 255, 255), // the icon color on floating action buttons
           onBackground: const Color.fromARGB(255, 0, 0, 0), // nothing
-          onSurface: const Color.fromARGB(255, 0, 0, 0), // most of the text fields
+          onSurface:
+              const Color.fromARGB(255, 0, 0, 0), // most of the text fields
           error: Colors.red[800]!,
           onError: Colors.white,
           brightness: Brightness.light,
@@ -60,7 +61,7 @@ class MyApp extends StatelessWidget {
           ),
           bodyLarge: TextStyle(
             fontSize: 16,
-            color: Colors.white70, // Slightly muted white for body text
+            color: Color.fromARGB(255, 0, 0, 0), // text 
           ),
         ),
         inputDecorationTheme: const InputDecorationTheme(
@@ -68,7 +69,7 @@ class MyApp extends StatelessWidget {
           fillColor: Colors.white,
           border: OutlineInputBorder(),
           hintStyle: TextStyle(
-            color: Color.fromARGB(160, 255, 255, 255), // Lighter hint text
+            color: Color.fromARGB(255, 122, 122, 122), // text hint
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(

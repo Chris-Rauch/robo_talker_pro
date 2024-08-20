@@ -44,9 +44,7 @@ class NoCallAgreementViewState extends State<NoCallAgreementView> {
         File file = File(result.files.single.path!);
         String contents = file.readAsStringSync();
         items = jsonDecode(contents);
-        if (true) {
-          
-        }
+        if (true) {}
         setState(() {
           items = jsonDecode(contents);
         });
@@ -61,14 +59,12 @@ class NoCallAgreementViewState extends State<NoCallAgreementView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('NCA List'),
+      ),
       body: Column(
         children: [
-          const Text(
-            'NCA List',
-            style: TextStyle(
-              fontSize: 36,
-            ),
-          ),
+          const SizedBox(height: 16),
           TextField(
             controller: controller,
             decoration: const InputDecoration(
@@ -76,6 +72,7 @@ class NoCallAgreementViewState extends State<NoCallAgreementView> {
             ),
             onSubmitted: (value) {
               //convert user input to JSON
+              // TODO check bad input by the user
               Map<String, dynamic> jsonValue = jsonDecode(
                   '{"company":"${value.split(':')[0]}","code":"${value.split(':')[1]}"}');
               // Check if the item already exists in the list
@@ -96,14 +93,40 @@ class NoCallAgreementViewState extends State<NoCallAgreementView> {
               itemCount: items.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  //TODO make the two tile views look better
                   title: Row(
+                    mainAxisAlignment: MainAxisAlignment
+                        .spaceBetween, // Distribute the text evenly
                     children: [
-                      Text(items[index][Keys.company.toLocalizedString()]!),
-                      Text(items[index][Keys.agentCode.toLocalizedString()]!),
+                      // Company name styled text
+                      Text(
+                        items[index][Keys.company.toLocalizedString()]!,
+                        style: const TextStyle(
+                          fontWeight:
+                              FontWeight.bold, // Make the company name bold
+                          fontSize: 16.0, // Set a consistent font size
+                          color: Colors
+                              .black87, // Use a darker color for better visibility
+                        ),
+                      ),
+                      // Agent code styled text
+                      Text(
+                        items[index][Keys.agentCode.toLocalizedString()]!,
+                        style: TextStyle(
+                          fontSize:
+                              14.0, // Slightly smaller font size for the agent code
+                          color: Colors.grey[
+                              600], // Use a lighter color to differentiate it
+                        ),
+                      ),
                     ],
                   ),
-                  tileColor: selectedIndex == index ? Colors.blue : null,
+                  tileColor: selectedIndex == index
+                      ? Colors.blue.withOpacity(0.1)
+                      : null, // Lighten the selected color for a softer effect
+                  shape: RoundedRectangleBorder(
+                    // Add a rounded border to the tile
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
                   onTap: () {
                     setState(() {
                       selectedIndex = index;

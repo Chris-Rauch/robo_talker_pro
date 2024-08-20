@@ -80,28 +80,33 @@ class ProjectViewState extends State<ProjectView> {
   // === UI Elements ===========================================================
   // ===========================================================================
   Widget _chooseProjectUI(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ElevatedButton(
-            child: const Text('Late Payment'),
-            onPressed: () {
-              _goNext(
-                  context, const ProjectSelectedEvent(ProjectType.latePayment));
-              _projectType = ProjectType.latePayment;
-            },
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            child: const Text('Return Mail'),
-            onPressed: () {
-              _goNext(
-                  context, const ProjectSelectedEvent(ProjectType.returnMail));
-              _projectType = ProjectType.returnMail;
-            },
-          ),
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Start a Project'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              child: const Text('Late Payment'),
+              onPressed: () {
+                _goNext(context,
+                    const ProjectSelectedEvent(ProjectType.latePayment));
+                _projectType = ProjectType.latePayment;
+              },
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              child: const Text('Return Mail'),
+              onPressed: () {
+                _goNext(context,
+                    const ProjectSelectedEvent(ProjectType.returnMail));
+                _projectType = ProjectType.returnMail;
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -376,5 +381,4 @@ class ProjectViewState extends State<ProjectView> {
     return '${dateTime.toLocal()}'
         .split(' ')[0]; // Adjust this formatting as needed
   }
-  
 }
