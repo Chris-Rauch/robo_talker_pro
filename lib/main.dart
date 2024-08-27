@@ -12,6 +12,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:robo_talker_pro/services/projectBloc/project_bloc.dart';
+import 'package:robo_talker_pro/services/settingsBloc/settings_bloc.dart';
 import 'package:robo_talker_pro/views/main_view/main_view.dart';
 
 void main() {
@@ -21,6 +22,9 @@ void main() {
         BlocProvider<ProjectBloc>(
           create: (context) => ProjectBloc(),
         ),
+        BlocProvider<SettingsBloc>(
+          create: (context) => SettingsBloc(),
+        )
       ],
       child: const MyApp(),
     ),
@@ -35,14 +39,14 @@ class MyApp extends StatelessWidget {
       title: 'Robotalker Pro',
       theme: ThemeData(
         colorScheme: ColorScheme(
-          primary: Color.fromARGB(255, 7, 0,
+          primary: const Color.fromARGB(255, 7, 0,
               0), // effects Text() elems (the text in my elevated buttons)
           secondary: const Color.fromARGB(255, 168, 189, 49), //nothing
           background:
               const Color.fromARGB(255, 255, 255, 255), // Bottom App Nav Bar
           surface: const Color.fromARGB(
               255, 158, 158, 158), // the header bar in settings
-          onPrimary: Color.fromARGB(255, 182, 169, 169)!,
+          onPrimary: const Color.fromARGB(255, 182, 169, 169),
           onSecondary: const Color.fromARGB(
               255, 255, 255, 255), // the icon color on floating action buttons
           onBackground: const Color.fromARGB(255, 0, 0, 0), // nothing
@@ -61,7 +65,7 @@ class MyApp extends StatelessWidget {
           ),
           bodyLarge: TextStyle(
             fontSize: 16,
-            color: Color.fromARGB(255, 0, 0, 0), // text 
+            color: Color.fromARGB(255, 0, 0, 0), // text
           ),
         ),
         inputDecorationTheme: const InputDecorationTheme(

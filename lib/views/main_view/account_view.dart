@@ -15,6 +15,7 @@ class AccountViewState extends State<AccountView> {
   final _callerIdController = TextEditingController();
   final _teUsernameController = TextEditingController();
   final _tePwordController = TextEditingController();
+  final _userIdController = TextEditingController();
   String? callUnits;
 
   @override
@@ -35,6 +36,9 @@ class AccountViewState extends State<AccountView> {
     loadData(Keys.tePassword.toLocalizedString()).then((value) {
       _tePwordController.text = value ?? '';
     });
+    loadData(Keys.userID.toLocalizedString()).then((value) {
+      _userIdController.text = value ?? '';
+    });
   }
 
   _save() {
@@ -44,6 +48,7 @@ class AccountViewState extends State<AccountView> {
     saveData(Keys.callerId.toLocalizedString(), _callerIdController.text);
     saveData(Keys.teUsername.toLocalizedString(), _teUsernameController.text);
     saveData(Keys.tePassword.toLocalizedString(), _tePwordController.text);
+    saveData(Keys.userID.toLocalizedString(), _userIdController.text);
   }
 
   @override
@@ -100,6 +105,16 @@ class AccountViewState extends State<AccountView> {
                     ),
                   ),
                   const SizedBox(height: 20),
+                  TextField(
+                    controller: _userIdController,
+                    decoration: const InputDecoration(
+                      hintText: 'User ID',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const Spacer(),
                   Row(
                     children: [
                       const Text(
@@ -118,12 +133,12 @@ class AccountViewState extends State<AccountView> {
                           color: Colors.red,
                         ),
                       ),
-                      const Spacer(),
-                      ElevatedButton(
-                        child: const Text('Buy more units'),
-                        onPressed: () {},
-                      ),
                     ],
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    child: const Text('Buy more units'),
+                    onPressed: () {},
                   ),
                   const SizedBox(height: 20),
                   Align(
@@ -168,20 +183,17 @@ class AccountViewState extends State<AccountView> {
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: ElevatedButton(
-                      child: const Text('Change memo'),
-                      onPressed: () {},
-                    ),
+                  const Spacer(),
+                  ElevatedButton(
+                    child: const Text('Change memo'),
+                    onPressed: () {},
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 20),
             Align(
-              alignment: Alignment.topCenter,
+              alignment: Alignment.bottomRight,
               child: FloatingActionButton(
                 onPressed: _save,
                 child: const Icon(Icons.save),

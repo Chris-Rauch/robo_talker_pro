@@ -26,9 +26,15 @@ class NoCallAgreementViewState extends State<NoCallAgreementView> {
       if (value != null) {
         setState(() {
           items = value; //TODO protect against unexpected values ie null
+          _sortList();
         });
       }
     });
+  }
+
+  void _sortList() {
+    items.sort((a, b) => a[Keys.company.toLocalizedString()]
+        .compareTo(b[Keys.company.toLocalizedString()]));
   }
 
   void _filePicker() async {
@@ -40,19 +46,41 @@ class NoCallAgreementViewState extends State<NoCallAgreementView> {
       );
 
       if ((result != null) && (result.files.single.path != null)) {
-        //open the file
+        // grab the file from disk
         File file = File(result.files.single.path!);
         String contents = file.readAsStringSync();
-        items = jsonDecode(contents);
-        if (true) {}
+
+        // update the UI
         setState(() {
-          items = jsonDecode(contents);
+          items = jsonDecode(contents)[Keys.ncaList.toLocalizedString()];
+          _sortList();
         });
       } else {
         throw Exception('User Exited');
       }
     } catch (e) {
       log('Error getting NCA List', error: e);
+    }
+  }
+
+  void _addItemToList(String value) {
+    // check user input
+    List<String> agent = value.split(':');
+    if (agent.length != 2) {
+      showSnackBarAfterBuild(context, 'Incorrect Format');
+    } else {
+      // add input to list
+      Map<String, dynamic> jsonValue;
+      jsonValue = jsonDecode('{"company":"${agent[0]}","code":"${agent[1]}"}');
+      if (!items.contains(jsonValue)) {
+        setState(() {
+          items.insert(0, jsonValue);
+          _sortList();
+          controller.clear();
+        });
+      } else {
+        showSnackBarAfterBuild(context, 'That company is already in the list');
+      }
     }
   }
 
@@ -68,25 +96,9 @@ class NoCallAgreementViewState extends State<NoCallAgreementView> {
           TextField(
             controller: controller,
             decoration: const InputDecoration(
-              labelText: "Company Name",
+              labelText: "Agent Name: Agent Code",
             ),
-            onSubmitted: (value) {
-              //convert user input to JSON
-              // TODO check bad input by the user
-              Map<String, dynamic> jsonValue = jsonDecode(
-                  '{"company":"${value.split(':')[0]}","code":"${value.split(':')[1]}"}');
-              // Check if the item already exists in the list
-              if (!items.contains(jsonValue)) {
-                setState(() {
-                  items.insert(0, jsonValue);
-                  controller.clear();
-                });
-              } else {
-                // Show a snackbar indicating that the item already exists
-                showSnackBarAfterBuild(
-                    context, 'That company is already in the list');
-              }
-            },
+            onSubmitted: (value) => _addItemToList(value),
           ),
           Expanded(
             child: ListView.builder(

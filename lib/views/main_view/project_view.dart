@@ -23,10 +23,10 @@ class ProjectViewState extends State<ProjectView> {
   final _filePath = TextEditingController();
   final _folderPath = TextEditingController();
   ProjectType _projectType = ProjectType.latePayment;
-  TimeOfDay _startTime = const TimeOfDay(hour: 12, minute: 15);
-  TimeOfDay _stopTime = const TimeOfDay(hour: 12, minute: 30);
-  DateTime _startDate = DateTime.now();
-  DateTime _stopDate = DateTime.now();
+  DateTime _startDate = DateTime(
+      DateTime.now().year, DateTime.now().month, DateTime.now().day, 12, 15);
+  DateTime _stopDate = DateTime(
+      DateTime.now().year, DateTime.now().month, DateTime.now().day, 12, 30);
   Widget? currentWidget;
 
 /*
@@ -62,9 +62,8 @@ class ProjectViewState extends State<ProjectView> {
             currentWidget = _waitingUI(context, state.estimatedCompletionTime);
           } else if (state is ProgressState) {
             currentWidget = _progressBarUI(context, state.progress);
-          } else if (state is PollingResourceState) {
-            currentWidget =
-                _pollingResourceUI(context, state.estimatedCompletionTime);
+          } else if (state is JobCompleteState) {
+            currentWidget = _finishedProjectUI(context);
           } else if (state is ProjectErrorState) {
             // 'skip' the rebuild process to show error to user
           } else {
@@ -196,7 +195,7 @@ class ProjectViewState extends State<ProjectView> {
             Row(
               children: [
                 Text(
-                    "Start Time: ${_startTime.format(context)}"), // Display selected date and time for start time
+                    "Start Time: ${DateFormat('jm').format(_startDate)}"), // Display selected date and time for start time
                 const SizedBox(width: 32),
                 ElevatedButton(
                   onPressed: () => _selectTime(context, true),
@@ -208,7 +207,7 @@ class ProjectViewState extends State<ProjectView> {
             Row(
               children: [
                 Text(
-                    'Stop Time: ${_stopTime.format(context)}'), // Display selected date and time for stop time
+                    'Stop Time: ${DateFormat('jm').format(_stopDate)}'), // Display selected date and time for stop time
                 const SizedBox(width: 32),
                 ElevatedButton(
                   onPressed: () => _selectTime(context, false),
@@ -250,44 +249,52 @@ class ProjectViewState extends State<ProjectView> {
   }
 
   Widget _waitingUI(BuildContext context, DateTime displayTime) {
-    return const Scaffold();
-  }
-
-  Widget _progressBarUI(BuildContext context, double progress) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: LinearProgressIndicator(
-            value: progress, // A value between 0.0 and 1.0
-            backgroundColor: Colors.grey.shade300,
-            color: Colors.green,
-            minHeight: 12.0,
-          ),
+    String formattedTime =
+        DateFormat('h:mm a, MMMM d, yyyy').format(displayTime);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Estimated Completion Time'),
+      ),
+      body: Center(
+        child: Text(
+          'Estimated completion time is $formattedTime.',
+          style: const TextStyle(fontSize: 20.0),
+          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 20.0),
-        ElevatedButton(
-          onPressed: () {
-            setState(() {
-              progress += 0.1;
-              if (progress > 1.0) {
-                progress = 0.0;
-              }
-            });
-          },
-          child: const Text('Increase Progress'),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _pollingResourceUI(BuildContext context, DateTime endDate) {
-    String formattedTime = _formatDateTime(endDate);
-    return Center(
+  Widget _progressBarUI(BuildContext context, double progress) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Accounts are being memo\'d'),
+      ),
+      body: Column(
+        children: [
+          const SizedBox(height: 100),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: LinearProgressIndicator(
+              value: progress, // A value between 0.0 and 1.0
+              backgroundColor: Colors.grey.shade300,
+              color: Colors.green,
+              minHeight: 12.0,
+            ),
+          ),
+          Center(
+            child: Text('${(progress * 100).toInt()}%'),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _finishedProjectUI(BuildContext context) {
+    return const Center(
       child: Text(
-        'Calls have been sent. Expected to finish at: $formattedTime',
-        style: const TextStyle(fontSize: 18),
+        'All done!',
+        style: TextStyle(fontSize: 18),
         textAlign: TextAlign.center,
       ),
     );
@@ -338,6 +345,10 @@ class ProjectViewState extends State<ProjectView> {
       setState(() {
         _startDate = DateTime(pickedDate.year, pickedDate.month, pickedDate.day,
             _startDate.hour, _startDate.minute);
+
+        if (_startDate.isAfter(_stopDate)) {
+          _stopDate = _startDate.add(const Duration(minutes: 15));
+        }
       });
     }
   }
@@ -345,28 +356,20 @@ class ProjectViewState extends State<ProjectView> {
   Future<void> _selectTime(BuildContext context, bool isStartTime) async {
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
-      initialTime: isStartTime ? _startTime : _stopTime,
+      initialTime: TimeOfDay(hour: _startDate.hour, minute: _startDate.minute),
     );
 
     if (pickedTime != null) {
       setState(() {
         if (isStartTime) {
-          _startTime = pickedTime;
           _startDate = DateTime(_startDate.year, _startDate.month,
-              _startDate.day, _startTime.hour, _startTime.minute);
+              _startDate.day, pickedTime.hour, pickedTime.minute);
 
           // automatically select an end time 15 minutes after start time
-          if (_startTime.minute < 45) {
-            _stopTime = TimeOfDay(
-                hour: pickedTime.hour, minute: (pickedTime.minute + 15));
-          } else {
-            _stopTime = TimeOfDay(
-                hour: (pickedTime.hour + 1), minute: (pickedTime.minute - 45));
-          }
+          _stopDate = _startDate.add(const Duration(minutes: 15));
         } else {
-          _stopTime = pickedTime;
           _stopDate = DateTime(_stopDate.year, _stopDate.month, _stopDate.day,
-              _stopTime.hour, _stopTime.minute);
+              pickedTime.hour, pickedTime.minute);
         }
       });
     }

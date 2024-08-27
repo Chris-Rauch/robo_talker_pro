@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:archive/archive.dart';
 import 'package:http/http.dart' as http;
 
 class SettingsServices {
@@ -20,11 +21,12 @@ class SettingsServices {
   Future<void> updateChromium() async {
     try {
       // Define paths and URLs
+      String username = Platform.environment['USERNAME'] ?? 'Unknown';
       String downloadUrl =
-          'https://path_to_chromium_build.zip'; // Replace with actual URL
-      String savePath = '/path_to_save/chromium.zip';
-      String unzipDir = '/path_to_unzip/chromium';
-      String installDir = '/path_to_install/chromium';
+          'https://download-chromium.appspot.com/dl/Win_x64?type=snapshots';
+      String savePath = 'C:\\Users\\$username\\Downloads\\chromium.zip';
+      String unzipDir = 'C:\\Users\\$username\\AppData\\Local\\Chromium';
+      String installDir = 'C:\\Users\\$username\\AppData\\Local\\Chromium';
 
       // Download the build
       await downloadChromium(downloadUrl, savePath);
@@ -41,7 +43,7 @@ class SettingsServices {
     }
   }
 
-  String getDefaultInstallPath() {
+  String? getDefaultInstallPath() {
     if (Platform.isWindows) {
       return r'C:\Program Files\MyApp\Chromium';
     } else if (Platform.isMacOS) {
@@ -49,12 +51,42 @@ class SettingsServices {
     } else if (Platform.isLinux) {
       return '/usr/local/MyApp/Chromium';
     }
-    return '';
+    return null;
   }
 
-  Future<void> downloadChromium(String downloadUrl, String savePath) async {}
+  Future<void> downloadChromium(String downloadUrl, String savePath) async {
+    var uri = Uri.https(
+        'download-chromium.appspot.com', '/dl/Win_x64', {'type': 'snapshots'});
+    var response = await http.get(uri);
 
-  Future<void> unzipChromium(String savePath, String unzipDir) async {}
+    if (response.statusCode == 200) {
+      File file = File(savePath);
+      file.writeAsBytesSync(response.bodyBytes);
+    } else {
+      print('Exited with status code: ${response.statusCode}');
+    }
+  }
+
+  Future<void> unzipChromium(String savePath, String unzipDir) async {
+    // read zip file from disk
+    final file = File(savePath);
+    final bytes = file.readAsBytesSync();
+
+    //decode zip file
+    final archive = ZipDecoder().decodeBytes(bytes);
+    
+    // extract contents
+    for (final file in archive) {
+    final filename = '$unzipDir/${file.name}';
+    if (file.isFile) {
+      final outFile = File(filename);
+      await outFile.create(recursive: true);
+      await outFile.writeAsBytes(file.content as List<int>);
+    } else {
+      await Directory(filename).create(recursive: true);
+    }
+  }
+  }
 
   Future<void> replaceChromiumInstallation(
       String unzipdir, String installDir) async {}

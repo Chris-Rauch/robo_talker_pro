@@ -3,7 +3,6 @@
 /// manages the state transitions accordingly.
 library project_event_bloc;
 
-import 'package:flutter/material.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 
 abstract class ProjectEvent {

@@ -92,6 +92,13 @@ class FileServices {
 
         //Agent Code
         if (columnIndex == 1) {
+          if (await _noCallAgreement(agentCode: cell?.value.toString())) {
+            if (createContact != false) {
+              createContact = false;
+              _writeRowToFile(row);
+              break innerLoop;
+            }
+          }
         }
 
         //Phone number
@@ -145,6 +152,10 @@ class FileServices {
   /// - `String?`: The path to the project file.
   String get getProjectFileLocation {
     return _projectFileLocation;
+  }
+
+  String getProjectFolder() {
+    return p.dirname(_projectFileLocation);
   }
 
   ///Remove dollar signs. This is because of how robotalker.com reads them.
@@ -242,8 +253,6 @@ class FileServices {
           //same phone, different insured -> write to file
           contactList.remove(contact);
           _writeContactToFile(contact['phone']);
-          _writeRowToFile(row);
-
           return true;
         }
       }

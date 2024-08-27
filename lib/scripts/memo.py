@@ -130,7 +130,7 @@ class ThirdEye:
             print("Unknown Error")
             return False
         else:
-            save_memo.click()
+            #save_memo.click()
             #print("Save succussful")
             return True
         
@@ -311,23 +311,36 @@ def format_Subject(contact_name,dial_number,call_start_time,call_end_time,messag
 #                   of JSON data
 def load_report(data):
     rows = []
-    # data is a file path
-    if(os.path.isFile(data)):
-      with open(inputFile,mode = 'r',encoding = 'utf-8') as csv_file:
-        csv_reader = csv.reader(csv_file,delimiter=',')
-        for row in csv_reader:
-          rows.append(row)
+    # data is a csv filePath
+    if(os.path.isfile(data) and data.endswith('.csv')):
+        inputFile = data
+        with open(inputFile, mode = 'r',encoding = 'utf-8') as csv_file:
+            counter = 0
+            csv_reader = csv.reader(csv_file,delimiter=',')
+            for row in csv_reader:
+                if counter != 0:
+                    rows.append(row)
+                counter = counter + 1
+        return rows
 
+    # data is a .json file
+    if(os.path.isfile(data) and data.endswith('.json')):
+        inputFile = data
+        with open(inputFile, mode = 'r',encoding = 'utf-8') as file:
+            contents = file.read()
+            contentsJson = json.loads(contents)
+            data = contentsJson['calldata']
+      
     # data is a json list
-    else:
-      json_list = json.loads(data)
-      for item in json_list:
+    json_list = json.loads(data)
+    for item in json_list:
         row = [item['ContactName'], item['DialNumber'],      item['Description'],
-               item['CallAttempts'],item['CallerNumber'],    item['ScheduledTime'],
-               item['CallDuration'],item['EndTime'],         item['MessageId'],
-               item['KeyHitByUser'],item['AllKeysHitByUser'],item['StartTime'],
-               item['CallRingTime'],item['JobId']
-               ]
+            item['CallAttempts'],item['CallerNumber'],    item['ScheduledTime'],
+            item['CallDuration'],item['EndTime'],         item['MessageId'],
+            item['KeyHitByUser'],item['AllKeysHitByUser'],item['StartTime'],
+            item['CallRingTime'],item['JobId'],           item['var1'],
+            item['var2'],        item['var3'],            item['var4']
+            ]
         rows.append(row)
     return rows
 
@@ -352,10 +365,7 @@ failed = []
 #set and check arguments
 if len(sys.argv) < 5:
     exit("Did not enter all arguments")
-inputFile = sys.argv[1]
-#te = ThirdEye(sys.argv[2],sys.argv[6])
-te = ThirdEye("head",sys.argv[6])
-te.login(sys.argv[3],sys.argv[4])
+inputData = sys.argv[1]
 
 #memo'ing info
 memos = sys.argv[5].split(',')
@@ -363,22 +373,12 @@ if len(memos) != 4:
     exit("Expected 4 subject memos but " + str(len(memos)) + " were given\n" + "".join(memos))
     
 # get contact data
-row = load_report(sys.argv[1])
+rows = load_report(sys.argv[1])
 num_contracts = len(rows)
 
+te = ThirdEye("head",sys.argv[6])
+te.login(sys.argv[3],sys.argv[4])
 te.navigate_to('Search Page')
-
-#load file into memory
-'''
-extra = 0
-with open(inputFile,mode = 'r',encoding = 'utf-8') as csv_file:
-    csv_reader = csv.reader(csv_file,delimiter=',')
-    for row in csv_reader:
-        rows.append(row)
-        if row[17].find('and') != -1:
-            extra += 1
-num_contracts = len(rows) + extra
-'''
 
 #Memo Accounts
 #row is a row from the input csv file. Represented as an array of strings
@@ -386,7 +386,7 @@ count = 0
 estimated_time = 0
 start_time = time.time()
 
-for row in rows[1:]:   
+for row in rows:   
     
     #add notice type and date if applicable
     #only applies in regards to Return Mail Project

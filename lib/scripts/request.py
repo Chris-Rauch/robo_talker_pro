@@ -18,9 +18,19 @@
 #            ["Invalid number of arguments"]
 #            [HTTP Request failed: {e}]
 
+import os
 import requests
 import json
 import sys
+
+def load_data(data):
+    if(os.path.isfile(data)):
+      with open(data, mode= 'r', encoding= 'utf-8') as file:
+        contents = file.read()
+      contentsJson = json.loads(contents)
+      data = contentsJson['requestbody']
+
+    return data
 
 if __name__ == "__main__":
     if len(sys.argv) < 4 or len(sys.argv) > 5:
@@ -31,6 +41,7 @@ if __name__ == "__main__":
     url = sys.argv[2]
 
     # get the headers from the arg list. Check formatting (expected JSON) 
+    sys.argv[3] = '{"Content-Type":\"application/json\",\"Authorization\":\"Basic Y2hyaXNAbXlnYWFjLmNvbToyMzA4M0JCOEMzNEEyMkFFQzU5QjA0Q0YyQjI1MEM2Qg==\",\"Cookie\":\"Cookie_1=value\"}'# REMOVE
     headers = None
     if(len(sys.argv) >= 4):
       try:
@@ -44,8 +55,10 @@ if __name__ == "__main__":
     body = None
     if(len(sys.argv) == 5):
         try:
-          t = sys.argv[4] 
+          t = load_data(sys.argv[4])
           body = json.loads(t)
+          body['contactlist'] = json.loads(body['contactlist'])
+          body = json.dumps(body)
         except json.JSONDecodeError:
           sys.stderr.write("Invalid JSON body")
           sys.exit(-1)

@@ -25,7 +25,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       }
     });
 
-    /// The user has chosen a Late Payment File and a directory for the 
+    /// The user has chosen a Late Payment File and a directory for the
     /// project. Parse the file to get contact info and save necessary data
     /// for the project.
     on<FilePathSelectedEvent>((event, emit) async {
@@ -35,6 +35,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       String contacts = '';
 
       try {
+        emit(ProjectLoadingState());
         // check user input
         if (filePath == null || folderPath == null) {
           throw Exception('Please make your selections');
@@ -42,6 +43,9 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
 
         // File Service object will handle all file operations
         var fileServices = FileServices(filePath, folderPath);
+
+        // set global variable
+        PROJECT_DATA_PATH = fileServices.getProjectFileLocation;
 
         // parse file
         String projectTypeAsString = '';
@@ -62,9 +66,6 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         key = Keys.projectType.toLocalizedString();
         await saveData(key, projectTypeAsString, path: PROJECT_DATA_PATH);
 
-        // set global variable
-        PROJECT_DATA_PATH = fileServices.getProjectFileLocation;
-
         emit(ChooseCallInfoState(jobName));
       } catch (e) {
         if (e == PathAccessException) {
@@ -83,60 +84,73 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
 
       try {
         RoboServices job = RoboServices(jobName, startDate, endDate);
-        String headerAsString = jsonEncode(await job.getHeaders());
-        String bodyAsString =
-            jsonEncode(await job.getBody(RequestType.multiJobPost));
-        String url = job.getUrl(RequestType.multiJobPost).toString();
+        int exitCode = -1;
+        bool keepTrying = true;
+        DateTime estimatedCompletion = job.endDate;
 
-        // save new data
-        saveData(Keys.groupName.toLocalizedString(), jobName,
+        startDate = startDate.add(const Duration(hours: 3));
+        endDate = endDate.add(const Duration(hours: 3));
+
+        await saveData(Keys.startTime.toLocalizedString(), startDate.toString(),
+            path: PROJECT_DATA_PATH);
+        await saveData(Keys.endTime.toLocalizedString(), endDate.toString(),
+            path: PROJECT_DATA_PATH);
+        await saveData(Keys.groupName.toLocalizedString(), jobName,
+            path: PROJECT_DATA_PATH);
+        String body = jsonEncode(await job.getBody(RequestType.multiJobPost));
+        await saveData(Keys.requestBody.toLocalizedString(), body,
             path: PROJECT_DATA_PATH);
 
-        // TODO this is going to be dependent on the user's $PATH variable (maybe python.exe too...)
+        // TODO if the user updates this data, then contactList needs to be altered
+
         // post to RoboTalker website
-        Process process = await Process.start('python', [
-          '/lib/scripts/request.py',
-          'POST',
-          url,
-          headerAsString,
-          bodyAsString
-        ]);
-        int exitCode = await process.exitCode;
-        if (exitCode == 0) {
-          emit(
-            // Bloc will build a widget telling the user to wait for calls to finish
-            PollingResourceState(endDate),
-          );
-        } else {
+        exitCode = await job.start();
+        if (exitCode != 0) {
           throw Exception('Could not post job to RoboTalker website');
         }
 
-        // get request to RoboTalker (wait for calls to finish and grab their info)
-        process = await Process.start('python', [
-          '/lib/scripts/request.py',
-          'GET',
-          job.getUrl(RequestType.jobDetails).toString()
-        ]);
-        // Status code: 200
-        // Response: No record found.
-        exitCode = await process.exitCode;
+        // wait for calls to finish and grab their info
+        while (keepTrying) {
+          print(keepTrying);
+          emit(PollingResourceState(
+              estimatedCompletion.add(const Duration(minutes: 5))));
+          keepTrying = !(await job.getJobDetails());
+        }
 
         // start memo'ing accounts
-        process = await Process.start('python', [
-          '/lib/scripts/request.py',
+        Process process = await Process.start('python', [
+          "C:\\Users\\rauch\\Projects\\flutter\\robo_talker_pro\\lib\\scripts\\memo.py",
+          PROJECT_DATA_PATH!,
+          'head',
+          await loadData(Keys.teUsername.toLocalizedString()),
+          await loadData(Keys.tePassword.toLocalizedString()),
+          MEMO_BODY,
+          await loadData(Keys.chromePath.toLocalizedString())
         ]);
+
+        // handle stdout
         await for (final output in process.stdout) {
-          if (output.length == 1) {
-            int percentComplete = output.first;
-            emit(ProgressState(percentComplete.roundToDouble()));
+          String pipe = String.fromCharCodes(output);
+          List<String> pipeSections = pipe.split('~');
+
+          if (pipeSections.length == 4) {
+            double percent = double.parse(pipeSections[0]); // 1.0
+            //double estimatedTime = double.parse(pipeSections[1]); // 10 (in minutes)
+            //String success = pipeSections[2]; // success/failed
+            //String row = pipeSections[3]; // ['Me', '7143290331', 'Answering Machine', '1', '9494709674', '8/26/2024 5:35:00 PM', '80', '8/26/2024 5:36:37 PM', '3021657', '', '', '8/26/2024 5:35:17 PM', '28', '1008603', 'My agency', '1763.46', 'Aug 12, 2024', 'M W F 1 0 1 3 1 4']
+            emit(ProgressState(percent));
           }
+
+          print('stdout: $output');
         }
 
         exitCode = await process.exitCode;
-        if (exitCode == 1) {
+        print('Exit code: $exitCode');
+        if (exitCode == 0) {
           emit(JobCompleteState());
         }
       } catch (e) {
+        print('error $e');
         emit(ProjectErrorState(e));
       }
     });
