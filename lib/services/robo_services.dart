@@ -33,7 +33,6 @@ class RoboServices {
       throw Exception('Invalid times');
     }
 
-
     // check contacts -> phone must be 10 digits without a '1' or a '+'
     //                -> var 1-4 plus the message can't be longer than 250
 
@@ -137,7 +136,6 @@ class RoboServices {
     String statusCode = 'Status code: ';
     String response = 'Response: ';
     stdoutStream.listen((data) {
-      print(data);
       int startIndex = data.indexOf(statusCode);
       startIndex += statusCode.length;
       statusCode = data.substring(startIndex, startIndex + 3);
@@ -202,13 +200,18 @@ class RoboServices {
       String statusCode = 'Status code: ';
       String response = 'Response: ';
       stdoutStream.listen((data) async {
-        int startIndex = data.indexOf(statusCode);
-        startIndex += statusCode.length;
-        statusCode = data.substring(startIndex, startIndex + 3);
+        int startIndex;
+        if (data.contains(statusCode)) {
+          startIndex = data.indexOf(statusCode);
+          startIndex += statusCode.length;
+          statusCode = data.substring(startIndex, startIndex + 3);
+        }
 
-        startIndex = data.indexOf(response);
-        startIndex += response.length;
-        response = data.substring(startIndex);
+        if (data.contains(response)) {
+          startIndex = data.indexOf(response);
+          startIndex += response.length;
+          response = data.substring(startIndex);
+        }
 
         if (statusCode != '200') {
           throw Exception('Python process request.py exited with $statusCode');
