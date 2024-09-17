@@ -63,8 +63,7 @@ class FileServices {
   Future<String> handleLatePayment() async {
     List<Map<String, dynamic>> contactList = [];
     String groupname = getGroupName();
-    String sheetName = _latePaymentFile.getDefaultSheet() ??
-        (throw Exception('Cannot access default sheet'));
+    String sheetName = _latePaymentFile.getDefaultSheet()!;
     Sheet sheet = _latePaymentFile[sheetName];
 
     //save job name to project data file
@@ -72,47 +71,21 @@ class FileServices {
         path: PROJECT_DATA_PATH);
 
     //traverse excel file looking for NCA's and bad phone #'s
-    outerLoop: // columns
     for (int x = 2; x < sheet.rows.length; ++x) {
+      List<Data?> row = sheet.rows[x];
+      String agentCode = row[1]!.value.toString();
+      String phoneNumber = row[5]!.value.toString();
       bool createContact = true;
-      var row = sheet.rows[x];
-      innerLoop: // rows
-      for (var cell in row) {
-        int? columnIndex = cell?.columnIndex;
 
-        //Agent Name at column 0
-        if (columnIndex == 0) {
-          createContact = true;
-          if (await _noCallAgreement(company: cell?.value.toString())) {
-            createContact = false;
-            _writeRowToFile(row);
-            break innerLoop;
-          }
-        }
-
-        //Agent Code
-        if (columnIndex == 1) {
-          if (await _noCallAgreement(agentCode: cell?.value.toString())) {
-            if (createContact != false) {
-              createContact = false;
-              _writeRowToFile(row);
-              break innerLoop;
-            }
-          }
-        }
-
-        //Phone number
-        else if (columnIndex == 5) {
-          createContact = true;
-          if (_noNumber(cell?.value.toString())) {
-            createContact = false;
-            _writeRowToFile(row);
-            break innerLoop;
-          } else if (await _isDuplicate(row, contactList)) {
-            createContact = false;
-            break innerLoop;
-          }
-        }
+      // check the agent for the No Call Agreement
+      bool noCall = await _noCallAgreement(agentCode); //TODO
+      bool noNumber = _noNumber(phoneNumber);
+      bool duplicate = await _isDuplicate(row, contactList);
+      if (noCall || noNumber) {
+        createContact = false;
+        _writeRowToFile(row);
+      } else if (duplicate) {
+        createContact = false;
       }
 
       // if no exceptions were found, create the contact
@@ -177,25 +150,14 @@ class FileServices {
     return DateFormat('yMMMd').format(time);
   }
 
-  /// Checks if the company is in the No Call Agreement list. This function
-  /// primarily uses the agent code for identification. It will also check the
-  /// agent's name
-  Future<bool> _noCallAgreement({String? company, String? agentCode}) async {
-    if (company != null || agentCode != null) {
-      List<dynamic> nca = await loadData(Keys.ncaList.toLocalizedString()) ?? [];
-      for (var x in nca) {
-        //check for agent code
-        if (agentCode != null) {
-          if (x[Keys.agentCode.toLocalizedString()].trim() ==
-              agentCode.trim()) {
-            return true;
-          }
-        }
-        if (company != null) {
-          if (x[Keys.company.toLocalizedString()].trim() == company.trim()) {
-            return true;
-          }
-        }
+  /// Description: Checks if the company is in the No Call Agreement list. Uses
+  ///   the Agent Code provided by the user in the NCA list.
+  Future<bool> _noCallAgreement(String agentCode) async {
+    List<dynamic> nca = await loadData(Keys.ncaList.toLocalizedString()) ?? [];
+    for (var x in nca) {
+      //check for agent code
+      if (x[Keys.agentCode.toLocalizedString()].trim() == agentCode.trim()) {
+        return true;
       }
     }
     return false;
@@ -216,17 +178,13 @@ class FileServices {
   }
 
   ///Returns true if a duplicate number is found. There are 3 outcomes:
-  ///1) Matching phone numbers are under the same insured. Contact is combined.
+  ///1) Matching phone numbers are under the same insured. Contact is combined
+  ///   and added to contactList
   ///2) Matching phone numbers are under different insure. Contacts are written
   ///to the report file.
   ///3) Numbers don't match
   Future<bool> _isDuplicate(
       List<Data?> row, List<Map<String, dynamic>> contactList) async {
-    for (int x = 0; x < 9; ++x) {
-      if (row[x] == null) {
-        throw (Exception('Null found but not expected in _isDuplicate'));
-      }
-    }
     var groupName = await loadData(Keys.groupName.toLocalizedString(),
         path: PROJECT_DATA_PATH);
     for (var contact in contactList) {
@@ -236,6 +194,8 @@ class FileServices {
         String contract = _formatName(row[3]!.value.toString());
         String intentDate = row[6]!.value.toString();
         String paymentAmt = row[8]!.value.toString();
+
+        // Condition 1 else condition 2
         if (_areSimilar(contact['name'], name)) {
           //same phone, same insured -> merge
           contactList.remove(contact);
@@ -257,7 +217,7 @@ class FileServices {
         }
       }
     }
-    //different phone
+    // Condition 3. Different phone numbers
     return false;
   }
 
@@ -334,17 +294,20 @@ class FileServices {
     return contractNumber.replaceAll('and', ' and ');
   }
 
-  /// Appends argument 'row' to _reportFile
+  /// Description: Appends argument to _reportFile (report.xlsx). Converts the
+  ///   argument row into a List<CellType> in order to append to the excel file.
+  /// Input:
+  ///   [row] - List<Data> (excel cells) to append to file.
   void _writeRowToFile(List<Data?> row) {
-    List<CellValue?> cellValues = [];
     try {
       String sheetName = _reportFile.getDefaultSheet() ??
           (throw Exception(
               'Cannot access default sheet')); //get the default sheet name
       Sheet sheet = _reportFile[sheetName]; //initialize the sheet
 
+      // Convert List<Data> into List<CellValue>
+      List<CellValue?> cellValues = [];
       for (var cell in row) {
-        // Extract the value of each cell and add it to the list
         cellValues.add(cell?.value);
       }
       sheet.appendRow(cellValues);
@@ -367,15 +330,28 @@ class FileServices {
           (throw Exception('Cannot access default sheet'));
       Sheet sheet = _latePaymentFile[latePaymentSheet];
 
-      for (var row in sheet.rows) {
-        for (var cell in row) {
-          if (cell?.value.toString() == number) {
-            _writeRowToFile(row);
+      for (int rowIndex = 0; rowIndex < sheet.rows.length; rowIndex++) {
+        var row = sheet.rows[rowIndex];
+
+          if (row[5]!.value.toString() == number) {
+            _writeRowToFile(row); 
+            deleteRow(sheet, rowIndex, row.length);
+
+            // After deleting a row, adjust the rowIndex to account for the shifted rows
+            rowIndex--;
           }
-        }
       }
     } catch (e) {
       log('In function _writeContactToFile:', error: e);
+    }
+  }
+
+// Function to delete the row
+  void deleteRow(Sheet sheet, int rowIndex, int numCols) {
+    for (var colIndex = 0; colIndex < numCols; colIndex++) {
+      sheet.updateCell(
+          CellIndex.indexByColumnRow(columnIndex: colIndex, rowIndex: rowIndex),
+          null);
     }
   }
 
