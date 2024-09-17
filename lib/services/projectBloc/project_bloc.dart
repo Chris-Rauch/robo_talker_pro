@@ -81,9 +81,10 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       String jobName = event.jobName;
       DateTime startDate = event.startTime;
       DateTime endDate = event.endTime;
+      List<Map<String,dynamic>> list = [];
 
       try {
-        RoboServices job = RoboServices(jobName, startDate, endDate);
+        RoboServices job = RoboServices(jobName, startDate, endDate, '', '', list, '','' );
         int exitCode = -1;
         bool keepTrying = true;
         DateTime estimatedCompletion = job.endDate;
@@ -91,9 +92,10 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         startDate = startDate.add(const Duration(hours: 3));
         endDate = endDate.add(const Duration(hours: 3));
 
-        await saveData(Keys.startTime.toLocalizedString(), startDate.toString(),
+        await saveData(
+            Keys.runDateTime.toLocalizedString(), startDate.toString(),
             path: PROJECT_DATA_PATH);
-        await saveData(Keys.endTime.toLocalizedString(), endDate.toString(),
+        await saveData(Keys.endDateTime.toLocalizedString(), endDate.toString(),
             path: PROJECT_DATA_PATH);
         await saveData(Keys.groupName.toLocalizedString(), jobName,
             path: PROJECT_DATA_PATH);

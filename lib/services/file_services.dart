@@ -182,7 +182,7 @@ class FileServices {
   /// agent's name
   Future<bool> _noCallAgreement({String? company, String? agentCode}) async {
     if (company != null || agentCode != null) {
-      List<dynamic> nca = await loadData(Keys.ncaList.toLocalizedString());
+      List<dynamic> nca = await loadData(Keys.ncaList.toLocalizedString()) ?? [];
       for (var x in nca) {
         //check for agent code
         if (agentCode != null) {
@@ -219,7 +219,7 @@ class FileServices {
   ///1) Matching phone numbers are under the same insured. Contact is combined.
   ///2) Matching phone numbers are under different insure. Contacts are written
   ///to the report file.
-  ///3)Numbers don't match
+  ///3) Numbers don't match
   Future<bool> _isDuplicate(
       List<Data?> row, List<Map<String, dynamic>> contactList) async {
     for (int x = 0; x < 9; ++x) {

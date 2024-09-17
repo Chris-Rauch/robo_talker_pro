@@ -1,6 +1,6 @@
 /// Robo Services is going to:
 ///   1) Handle the HTTP requests specifically for the RoboTalker website.
-///   2) Validate user input such as start/end times,
+///   2) Validate user inputs
 
 /// This class is going to hold all the information needed to post a job to
 /// RoboTalker. It will also vet the information to make sure it will be
@@ -9,120 +9,124 @@ library robo_services;
 
 import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:robo_talker_pro/auxillary/constants.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 
 class RoboServices {
-  final String jobName;
-  final DateTime _startDate;
-  final DateTime _endDate;
+  // auth elems
+  String? _userName, _zKey;
 
-  //add all the url endpoints
-  final String _authority = 'https://robotalker.com/REST/api';
-  final String _jobDetails = "https://robotalker.com/GetJobDetail.ashx?";
+  // header elems
+  final String _contentType = 'application/json';
+  String? _auth, _cookie;
+
+  // body elems
+  final String _whatToDo = 'SendTtsMessage',
+      _messageId = '0',
+      _customerName = 'Chris Rauch',
+      _extraReportEmail = 'rauch.christopher13@gmail.com';
+  final String _jobName, _optCallerId, _messageText;
+  final List<Map<String, dynamic>>? _contactList;
+  final DateTime _runDateTime;
+  final DateTime _endDateTime;
+
+  // ashx request params
+  final String _userId = '2402';
+  String? _jobId;
+
+  // url's and endpoints
+  final String _domain = 'https://robotalker.com';
+  final String _subDir = '/REST/api';
+  final String _jobDetails = 'https://robotalker.com/GetJobDetail.ashx?';
   final String _multiJobPost = "/MultiJob";
   final String _login = "/Login";
+  final String _config = "/Config";
 
-  RoboServices(this.jobName, DateTime startDate, DateTime endDate)
-      : _startDate = startDate.add(const Duration(hours: 3)),
-        _endDate = endDate.add(const Duration(hours: 3)) {
-    // check times. Make sure it's during the day, not too many go out at once
-    // also make sure it's at least 15 minutes in the future
-    if (startDate.isAfter(endDate)) {
-      throw Exception('Invalid times');
-    }
+  // constructor
+  RoboServices(
+      this._jobName,
+      this._runDateTime,
+      this._endDateTime,
+      this._optCallerId,
+      this._messageText,
+      this._contactList,
+      this._userName,
+      this._zKey)
+      : _auth = 'Basic ${base64Encode(utf8.encode('$_userName:$_zKey'))}';
 
-    // check contacts -> phone must be 10 digits without a '1' or a '+'
-    //                -> var 1-4 plus the message can't be longer than 250
+  // === getters for HTTP data
 
-    // check unit balance
-  }
-
-  // Check user input functions ===
-  bool _isDuringLunch() {
-    return true;
-  }
-
-  // Grabbing HTTP request info ===
-  Future<Map<String, dynamic>> getBody(RequestType requestType) async {
-    Map<String, String> body;
+  /// Returns the HTTP body based on the request type
+  Map<String, dynamic> getBody(RequestType requestType) {
+    Map<String, dynamic> body;
     switch (requestType) {
       case RequestType.multiJobPost:
-        final String contactList = await loadData(
-            Keys.contactList.toLocalizedString(),
-            path: PROJECT_DATA_PATH);
-        final String callerId =
-            await loadData(Keys.callerId.toLocalizedString());
-        final String groupName = await loadData(
-            Keys.groupName.toLocalizedString(),
-            path: PROJECT_DATA_PATH);
-        final String startTime = await loadData(
-            Keys.startTime.toLocalizedString(),
-            path: PROJECT_DATA_PATH);
-        final String endTime = await loadData(Keys.endTime.toLocalizedString(),
-            path: PROJECT_DATA_PATH);
-
         body = {
-          'whattodo': 'SendTtsMessage',
-          'jobname': groupName,
-          'optcallerid': callerId,
-          'messageid': '0',
-          'messagetext': LATE_PAYMENT_MESSAGE,
-          'customername': 'Chris Rauch',
-          'extrareportemail': 'rauch.christopher13@gmail.com',
-          'phonelistgroupname': groupName,
-          'contactlist': contactList,
-          'rundatetime': startTime,
-          'enddatetime': endTime,
+          'whattodo': _whatToDo,
+          'jobname': _jobName,
+          'optcallerid': _optCallerId,
+          'messageid': _messageId,
+          'messagetext': _messageText,
+          'customername': _customerName,
+          'extrareportemail': _extraReportEmail,
+          'phonelistgroupname': _jobName,
+          'contactlist': _contactList,
+          'rundatetime': _runDateTime.toString(),
+          'enddatetime': _endDateTime.toString()
         };
         break;
       case RequestType.jobDetails:
-        body = {
-          'jobID': await loadData(Keys.jobID.toLocalizedString(),
-              path: PROJECT_DATA_PATH),
-          'userId': await loadData(Keys.userID.toLocalizedString())
-        };
+        body = {'jobID': _jobId, 'userId': _userId};
         break;
       default:
-        throw Exception('Could not load contact list from file');
+        throw Exception('Unknown request');
     }
     return body;
   }
 
-  Future<Map<String, dynamic>> getHeaders() async {
-    final username = await loadData(Keys.roboUsername.toLocalizedString());
-    final token = await loadData(Keys.zToken.toLocalizedString());
-    var credentials = base64Encode(utf8.encode('$username:$token'));
-
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Basic $credentials',
-      'Cookie': 'Cookie_1=value'
-    };
+  /// Return the HTTP header. Checks to see if cookie exists
+  Map<String, String> getHeader() {
+    Map<String, String> header = {};
+    header['Content-Type'] = _contentType;
+    if (_cookie != null) {
+      header['Cookie'] = _cookie!;
+    } else if (_auth != null) {
+      header['Authorization'] = _auth!;
+    }
+    return header;
   }
 
+  /// Return the the HTTP url based on the request type
   Uri getUrl(RequestType requestType) {
-    String endPoint;
+    String url = _domain;
     switch (requestType) {
+      case RequestType.login:
+        url += _subDir + _login;
+        break;
+      case RequestType.config:
+        url += _subDir + _config;
+        break;
       case RequestType.multiJobPost:
-        endPoint = '/MultiJob';
+        url += _subDir + _multiJobPost;
         break;
       case RequestType.jobDetails:
-        return Uri.parse(_jobDetails);
+        url = _jobDetails;
+        break;
       default:
         throw Exception('Endpoint not found');
     }
-    return Uri.parse(authority + endPoint);
+    return Uri.parse(url);
   }
 
-  /// === Something else goes here ===
+  /// HTTP handlers
   Future<int> start() async {
     Process process = await Process.start('python', [
       "C:\\Users\\rauch\\Projects\\flutter\\robo_talker_pro\\lib\\scripts\\request.py",
       'POST',
       getUrl(RequestType.multiJobPost).toString(),
-      jsonEncode(await getHeaders()),
+      jsonEncode(getHeader()),
       PROJECT_DATA_PATH!
     ]);
 
@@ -187,8 +191,8 @@ class RoboServices {
         "C:\\Users\\rauch\\Projects\\flutter\\robo_talker_pro\\lib\\scripts\\get.py",
         'GET',
         getUrl(RequestType.jobDetails).toString(),
-        jsonEncode(await getHeaders()),
-        jsonEncode(await getBody(RequestType.jobDetails))
+        jsonEncode(getHeader()),
+        jsonEncode(getBody(RequestType.jobDetails))
       ]);
       // Stream stdout and stderr
       final stdoutStream =
@@ -265,8 +269,8 @@ class RoboServices {
   }
 
   String get authority => 'https://robotalker.com/REST/api';
-  DateTime get startDate => _startDate.subtract(const Duration(hours: 3));
-  DateTime get endDate => _endDate.subtract(const Duration(hours: 3));
+  DateTime get startDate => _runDateTime.subtract(const Duration(hours: 3));
+  DateTime get endDate => _endDateTime.subtract(const Duration(hours: 3));
 
   String shortenList(String jsonString) {
     List<dynamic> trimmedInput = [];
@@ -286,4 +290,147 @@ class RoboServices {
     }
     return jsonEncode(trimmedInput);
   }
+
+  /// Makes an HTTP request to Robo Talker. If successful, returns the response
+  /// as json. Otherwise, null.
+  /// Returns:
+  /// { 
+  ///   "jobid" : ""
+  ///   "smsid" : ""
+  ///   "callid" : ""
+  /// }
+  Future<Map<String, String>?> multiJob() async {
+    // prep the data
+    var header = getHeader();
+    var body = getBody(RequestType.multiJobPost);
+    var url = getUrl(RequestType.multiJobPost);
+
+    // POST MultiJob
+    var request = http.Request('POST', url);
+    request.body = jsonEncode(body);
+    request.headers.addAll(header);
+    final response = await request.send();
+
+    // Check the status code and handle the response
+  if (response.statusCode == 200) {
+    final responseBody = await response.stream.bytesToString();
+    return jsonDecode(responseBody);
+  }
+
+  // If the request failed, return null
+  return null;
+  }
+
+  Future<http.StreamedResponse> getJobDetail() async {
+    // prep the data
+    var header = getHeader();
+    var body = getBody(RequestType.jobDetails);
+    var url = getUrl(RequestType.jobDetails);
+
+    // GET JobDetails
+    var request = http.Request('GET', url);
+    request.body = jsonEncode(body);
+    request.headers.addAll(header);
+
+    http.StreamedResponse response = await request.send();
+
+    return response;
+  }
 }
+
+
+/*
+var headers = {
+  'Content-Type': 'application/json',
+  'Authorization': '••••••',
+  'Cookie': '.ASPXAUTH=2BB7F32E00B1AEA0C1F8C77DB5A097B6D08A1591821E7A6D6F7D633E3546FD7657177AE3AAE8DDB4B5ACA086993F5BE46E4EA0AD5E07DF8C4093891E5F731BCD9D8DE6926BD54CB86BB3D5964366399B3858F1975EF5EF551BB4EC64'
+};
+var data = json.encode({
+  "whattodo": "SendTtsMessage",
+  "jobname": "LP 05/20/2024 to 05/24/2024",
+  "optcallerid": "9494709674",
+  "messageid": "0",
+  "messagetext": "Hi, this message is from General Agents and is for #name#. We’re calling in regards to your contract, #var4#. This is just a courtesy reminder that your payment of, $#var2#, was due on, #var3#, for your insurance policy with, #var1#. You can make payments online at mygaac.com. If you've already made a payment please disregard this message. Thankyou.",
+  "customername": "Chris Rauch",
+  "extrareportemail": "rauch.christopher13@gmail.com",
+  "phonelistgroupname": "LP 05/20/2024 to 05/24/2024",
+  "contactlist": [
+    {
+      "name": "S TOWN TRANSPORTATION INC",
+      "phone": "(209) 513-7883",
+      "var1": "MALWA FINANCIAL AND INSURANCE ",
+      "var2": "2542.02",
+      "var3": "May 20",
+      "var4": "M W F 1 3 7 7 7 0",
+      "groupname": "LP 05/20/2024 to 05/24/2024"
+    },
+    {
+      "name": "Harmanpreet Transport Inc",
+      "phone": "(559) 803-5062",
+      "var1": "MALWA FINANCIAL AND INSURANCE ",
+      "var2": "1267.53",
+      "var3": "May 20",
+      "var4": "M W F 1 4 2 0 0 7",
+      "groupname": "LP 05/20/2024 to 05/24/2024"
+    }
+  ],
+  "rundatetime": "2024/05/29 15:15:00"
+});
+var dio = Dio();
+var response = await dio.request(
+  'https://robotalker.com/REST/api/MultiJob',
+  options: Options(
+    method: 'POST',
+    headers: headers,
+  ),
+  data: data,
+);
+
+if (response.statusCode == 200) {
+  print(json.encode(response.data));
+}
+else {
+  print(response.statusMessage);
+}
+*/
+
+/*
+{
+    "whattodo": "SendTtsMessage",
+    "jobname": "LP 05/20/2024 to 05/24/2024",
+    "optcallerid": "9494709674",
+    "messageid": "0",
+    "messagetext": "Hi, this message is from General Agents and is for #name#. We’re calling in regards to your contract, #var4#. This is just a courtesy reminder that your payment of, $#var2#, was due on, #var3#, for your insurance policy with, #var1#. You can make payments online at mygaac.com. If you've already made a payment please disregard this message. Thankyou.",
+    "customername": "Chris Rauch",
+    //"messageidvm": "Robo Late Payment 1",
+    //"imageurl": "",
+    "extrareportemail": "rauch.christopher13@gmail.com",
+    //"transfernumber": "",
+    //"txtreportnumber": "",
+    "phonelistgroupname": "LP 05/20/2024 to 05/24/2024",
+    "contactlist": [
+        {
+            "name": "S TOWN TRANSPORTATION INC",
+            "phone": "(209) 513-7883",
+            "var1": "MALWA FINANCIAL AND INSURANCE ",
+            "var2": "2542.02",
+            "var3": "May 20",
+            "var4": "M W F 1 3 7 7 7 0",
+            "groupname": "LP 05/20/2024 to 05/24/2024"
+        },
+        {
+            "name": "Harmanpreet Transport Inc",
+            "phone": "(559) 803-5062",
+            "var1": "MALWA FINANCIAL AND INSURANCE ",
+            "var2": "1267.53",
+            "var3": "May 20",
+            "var4": "M W F 1 4 2 0 0 7",
+            "groupname": "LP 05/20/2024 to 05/24/2024"
+        }
+        
+    ],
+    "rundatetime": "2024/05/29 15:15:00"
+    //"enddatetime": "",
+    //"calloptions": ""
+}
+*/

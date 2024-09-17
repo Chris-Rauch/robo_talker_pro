@@ -1,6 +1,6 @@
 enum ProjectType { latePayment, returnMail }
 
-enum RequestType { multiJobPost, jobDetails }
+enum RequestType { multiJobPost, jobDetails, login, config }
 
 enum Update { chrome, chromium, software }
 
@@ -9,8 +9,8 @@ enum Keys {
   zToken,
   contactList,
   groupName,
-  startTime,
-  endTime,
+  runDateTime,
+  endDateTime,
   callerId,
   teUsername,
   tePassword,
@@ -37,9 +37,9 @@ extension KeyExtension on Keys {
         return 'contactlist';
       case Keys.groupName:
         return 'groupname';
-      case Keys.startTime:
+      case Keys.runDateTime:
         return 'rundatetime';
-      case Keys.endTime:
+      case Keys.endDateTime:
         return 'enddatetime';
       case Keys.callerId:
         return 'caller_id';
