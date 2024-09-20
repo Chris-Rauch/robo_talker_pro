@@ -42,7 +42,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         }
 
         // File Service object will handle all file operations
-        var fileServices = FileServices(filePath, folderPath);
+        List<dynamic> nca = await loadData(Keys.ncaList.toLocalizedString()) ?? [];
+        var fileServices = FileServices(filePath, folderPath, nca);
 
         // set global variable
         PROJECT_DATA_PATH = fileServices.getProjectFileLocation;
@@ -99,7 +100,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
             path: PROJECT_DATA_PATH);
         await saveData(Keys.groupName.toLocalizedString(), jobName,
             path: PROJECT_DATA_PATH);
-        String body = jsonEncode(await job.getBody(RequestType.multiJobPost));
+        String body = jsonEncode(job.getBody(RequestType.multiJobPost));
         await saveData(Keys.requestBody.toLocalizedString(), body,
             path: PROJECT_DATA_PATH);
 
