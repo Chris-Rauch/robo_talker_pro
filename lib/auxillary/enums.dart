@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 enum ProjectType { latePayment, returnMail }
 
 enum RequestType { multiJobPost, jobDetails, login, config }
@@ -6,12 +8,12 @@ enum Update { chrome, chromium, software }
 
 enum Keys {
   roboUsername,
-  zToken,
-  contactList,
+  z_token,
+  contactlist,
   groupName,
   runDateTime,
   endDateTime,
-  callerId,
+  caller_id,
   teUsername,
   tePassword,
   ncaList,
@@ -23,7 +25,7 @@ enum Keys {
   jobName,
   callData,
   chromePath,
-  requestBody
+  request_body
 }
 
 extension KeyExtension on Keys {
@@ -31,9 +33,9 @@ extension KeyExtension on Keys {
     switch (this) {
       case Keys.roboUsername:
         return 'roboUsername';
-      case Keys.zToken:
+      case Keys.z_token:
         return 'z_token';
-      case Keys.contactList:
+      case Keys.contactlist:
         return 'contactlist';
       case Keys.groupName:
         return 'groupname';
@@ -41,7 +43,7 @@ extension KeyExtension on Keys {
         return 'rundatetime';
       case Keys.endDateTime:
         return 'enddatetime';
-      case Keys.callerId:
+      case Keys.caller_id:
         return 'caller_id';
       case Keys.teUsername:
         return 'Third Eye Username';
@@ -63,7 +65,7 @@ extension KeyExtension on Keys {
         return 'calldata';
       case Keys.chromePath:
         return 'chromepath';
-      case Keys.requestBody:
+      case Keys.request_body:
         return 'requestbody';
       default:
         throw ArgumentError('Unknown key: $this');

@@ -106,7 +106,7 @@ class FileServices {
           !contains(noNums, row) &&
           !contains(duplicates, row));
 
-      if (exception) {
+      if (!exception) {
         contactList.add({
           'name': _formatName(row[4]?.value.toString()), //insured name
           'phone': row[5]?.value.toString(), //phone number

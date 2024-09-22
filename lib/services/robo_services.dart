@@ -27,8 +27,8 @@ class RoboServices {
       _messageId = '0',
       _customerName = 'Chris Rauch',
       _extraReportEmail = 'rauch.christopher13@gmail.com';
-  final String _jobName, _optCallerId, _messageText;
-  final List<Map<String, dynamic>>? _contactList;
+  final String? _jobName, _optCallerId, _messageText;
+  final List<dynamic>? _contactList;
   final DateTime _runDateTime;
   final DateTime _endDateTime;
 
@@ -56,8 +56,6 @@ class RoboServices {
       this._zKey)
       : _auth = 'Basic ${base64Encode(utf8.encode('$_userName:$_zKey'))}';
 
-  // === getters for HTTP data
-
   /// Returns the HTTP body based on the request type
   Map<String, dynamic> getBody(RequestType requestType) {
     Map<String, dynamic> body;
@@ -66,9 +64,9 @@ class RoboServices {
         body = {
           'whattodo': _whatToDo,
           'jobname': _jobName,
-          'optcallerid': _optCallerId,
+          'optcallerid': _optCallerId ?? '',
           'messageid': _messageId,
-          'messagetext': _messageText,
+          'messagetext': _messageText ?? '',
           'customername': _customerName,
           'extrareportemail': _extraReportEmail,
           'phonelistgroupname': _jobName,
@@ -121,7 +119,7 @@ class RoboServices {
   }
 
   /// HTTP handlers
-  Future<int> start() async {
+  Future<int> post() async {
     Process process = await Process.start('python', [
       "C:\\Users\\rauch\\Projects\\flutter\\robo_talker_pro\\lib\\scripts\\request.py",
       'POST',
@@ -148,13 +146,16 @@ class RoboServices {
       startIndex += response.length;
       response = data.substring(startIndex);
 
+      print('Repsonse: $response');
+
       if (statusCode != '200') {
         throw Exception('Python process request.py exited with $statusCode');
       }
 
       // json data that I want
       var responseJson = jsonDecode(response);
-      String jobId = responseJson['callId'];
+      String? jobId = responseJson['callId'];
+      _jobId = jobId;
       //responseJson['smsId'];
       //responseJson['callId'];
 
@@ -172,21 +173,30 @@ class RoboServices {
     //print('Python process exited with code: $exitCode');
   }
 
-  /// Robo Talker server posts job details in JSON format when a job has
-  /// completed. This function waits till the scheduled end time then attempts
-  /// to GET that data. If the job details haven't been posted, then make GET
-  /// request every five minutes
+  /// Description: Fetches job details from the Robo Talker server in JSON
+  ///   format after a job has completed. The function waits until the scheduled
+  ///   job end time before making a GET request. If job details aren't
+  ///   available immediately, it retries every five minutes until successful.
+  ///   On successful retrieval, the function processes the response and saves
+  ///   the job details locally.
+  /// Returns:
+  ///   [bool] true if the job details were successfully fetched,
+  ///   otherwise `false`.
   Future<bool> getJobDetails() async {
     DateTime now = DateTime.now();
     Duration timeToWait = endDate.difference(now);
     bool success = false;
 
+    print('time to wait: ${timeToWait.toString()}');
+
     // if difference is negative, the job should be over
     if (timeToWait.isNegative) {
+      print('Time to wait is negative');
       timeToWait = const Duration(minutes: 5);
     }
     // Wait the specified amount of time and then try and grab job details
     await Future.delayed(timeToWait, () async {
+      print('awaiting the delayed process');
       Process process = await Process.start('python', [
         "C:\\Users\\rauch\\Projects\\flutter\\robo_talker_pro\\lib\\scripts\\get.py",
         'GET',
@@ -205,6 +215,7 @@ class RoboServices {
       String response = 'Response: ';
       stdoutStream.listen((data) async {
         int startIndex;
+        print('stdout: $data');
         if (data.contains(statusCode)) {
           startIndex = data.indexOf(statusCode);
           startIndex += statusCode.length;
@@ -225,17 +236,19 @@ class RoboServices {
           print('Response: $response');
           success = true;
           String contactList = await loadData(
-              Keys.contactList.toLocalizedString(),
+              Keys.contactlist.toLocalizedString(),
               path: PROJECT_DATA_PATH);
           String detailedReport = _getVars(response, contactList);
           await saveData(Keys.callData.toLocalizedString(), detailedReport,
               path: PROJECT_DATA_PATH);
+        } else {
+          success = false;
         }
       });
 
       // Handle stderr
       stderrStream.listen((data) {
-        print(data);
+        print('stderr: $data');
         throw Exception(data);
       });
       await process.exitCode;
@@ -294,7 +307,7 @@ class RoboServices {
   /// Makes an HTTP request to Robo Talker. If successful, returns the response
   /// as json. Otherwise, null.
   /// Returns:
-  /// { 
+  /// {
   ///   "jobid" : ""
   ///   "smsid" : ""
   ///   "callid" : ""
@@ -312,13 +325,13 @@ class RoboServices {
     final response = await request.send();
 
     // Check the status code and handle the response
-  if (response.statusCode == 200) {
-    final responseBody = await response.stream.bytesToString();
-    return jsonDecode(responseBody);
-  }
+    if (response.statusCode == 200) {
+      final responseBody = await response.stream.bytesToString();
+      return jsonDecode(responseBody);
+    }
 
-  // If the request failed, return null
-  return null;
+    // If the request failed, return null
+    return null;
   }
 
   Future<http.StreamedResponse> getJobDetail() async {
@@ -337,7 +350,6 @@ class RoboServices {
     return response;
   }
 }
-
 
 /*
 var headers = {
