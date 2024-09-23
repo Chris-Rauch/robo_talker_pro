@@ -42,7 +42,9 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         }
 
         // File Service object will handle all file operations
-        var fileServices = FileServices(filePath, folderPath);
+        List<dynamic> nca =
+            await loadData(Keys.ncaList.toLocalizedString()) ?? [];
+        var fileServices = FileServices(filePath, folderPath, nca);
 
         // set global variable
         PROJECT_DATA_PATH = fileServices.getProjectFileLocation;
@@ -59,7 +61,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
 
         // save contacts, groupName and project type
         String jobName = fileServices.getGroupName();
-        String key = Keys.contactList.toLocalizedString();
+        String key = Keys.contactlist.toLocalizedString();
         await saveData(key, contacts, path: PROJECT_DATA_PATH);
         key = Keys.groupName.toLocalizedString();
         await saveData(key, jobName, path: PROJECT_DATA_PATH);
@@ -79,42 +81,46 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     /// All necessary information has been received. Make HTTP request
     on<PostJobEvent>((event, emit) async {
       String jobName = event.jobName;
-      DateTime startDate = event.startTime;
-      DateTime endDate = event.endTime;
+      DateTime startDate = event.startTime.add(const Duration(hours: 3));
+      DateTime endDate = event.endTime.add(const Duration(hours: 3));
+      int exitCode = -1;
+      bool keepTrying = true;
+      DateTime estimatedCompletion = endDate.subtract(const Duration(hours: 3));
 
       try {
-        RoboServices job = RoboServices(jobName, startDate, endDate);
-        int exitCode = -1;
-        bool keepTrying = true;
-        DateTime estimatedCompletion = job.endDate;
-
-        startDate = startDate.add(const Duration(hours: 3));
-        endDate = endDate.add(const Duration(hours: 3));
-
-        await saveData(Keys.startTime.toLocalizedString(), startDate.toString(),
-            path: PROJECT_DATA_PATH);
-        await saveData(Keys.endTime.toLocalizedString(), endDate.toString(),
-            path: PROJECT_DATA_PATH);
-        await saveData(Keys.groupName.toLocalizedString(), jobName,
-            path: PROJECT_DATA_PATH);
-        String body = jsonEncode(await job.getBody(RequestType.multiJobPost));
-        await saveData(Keys.requestBody.toLocalizedString(), body,
-            path: PROJECT_DATA_PATH);
+        String? username = await loadData(Keys.roboUsername.name);
+        String? zKey = await loadData(Keys.z_token.name);
+        String? callerId = await loadData(Keys.caller_id.name);
+        String? contactList =
+            await loadData(Keys.contactlist.name, path: PROJECT_DATA_PATH);
+        if (username == null) {
+          throw Exception('Username not provided. did you forget to save?');
+        } else if (zKey == null) {
+          throw Exception('Z Token not provided. did you forget to save?');
+        } else if (contactList == null) {
+          throw Exception('Couldn\'t find contact list');
+        }
 
         // TODO if the user updates this data, then contactList needs to be altered
 
         // post to RoboTalker website
-        exitCode = await job.start();
+        RoboServices job = RoboServices(jobName, startDate, endDate, callerId,
+            LATE_PAYMENT_MESSAGE, jsonDecode(contactList), username, zKey);
+        String? body = jsonEncode(job.getBody(RequestType.multiJobPost));
+        await saveData(Keys.request_body.name, body, path: PROJECT_DATA_PATH);
+        exitCode = await job.post();
         if (exitCode != 0) {
           throw Exception('Could not post job to RoboTalker website');
         }
 
         // wait for calls to finish and grab their info
+        int testingInt = 0;
         while (keepTrying) {
-          print(keepTrying);
-          emit(PollingResourceState(
-              estimatedCompletion.add(const Duration(minutes: 5))));
+          emit(PollingResourceState(estimatedCompletion));
           keepTrying = !(await job.getJobDetails());
+          estimatedCompletion =
+              estimatedCompletion.add(const Duration(minutes: 5));
+          print('keep trying loop: $testingInt');
         }
 
         // start memo'ing accounts
@@ -125,7 +131,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           await loadData(Keys.teUsername.toLocalizedString()),
           await loadData(Keys.tePassword.toLocalizedString()),
           MEMO_BODY,
-          await loadData(Keys.chromePath.toLocalizedString())
+          await loadData(Keys.chrome_path.toLocalizedString())
         ]);
 
         // handle stdout
@@ -150,7 +156,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           emit(JobCompleteState());
         }
       } catch (e) {
-        print('error $e');
+        print('Post Job Event Error: $e');
         emit(ProjectErrorState(e));
       }
     });
