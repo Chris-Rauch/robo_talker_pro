@@ -24,8 +24,9 @@ enum Keys {
   userID,
   jobName,
   callData,
-  chromePath,
-  request_body
+  chrome_path,
+  request_body,
+  software_version
 }
 
 extension KeyExtension on Keys {
@@ -63,10 +64,12 @@ extension KeyExtension on Keys {
         return 'userId';
       case Keys.callData:
         return 'calldata';
-      case Keys.chromePath:
-        return 'chromepath';
+      case Keys.chrome_path:
+        return 'chrome_path';
       case Keys.request_body:
         return 'requestbody';
+      case Keys.software_version:
+        return 'software_version';
       default:
         throw ArgumentError('Unknown key: $this');
     }

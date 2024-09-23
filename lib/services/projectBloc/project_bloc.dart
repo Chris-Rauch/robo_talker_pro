@@ -131,7 +131,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           await loadData(Keys.teUsername.toLocalizedString()),
           await loadData(Keys.tePassword.toLocalizedString()),
           MEMO_BODY,
-          await loadData(Keys.chromePath.toLocalizedString())
+          await loadData(Keys.chrome_path.toLocalizedString())
         ]);
 
         // handle stdout

@@ -7,7 +7,21 @@ import 'package:robo_talker_pro/services/settingsBloc/settings_state.dart';
 import 'package:robo_talker_pro/services/settings_services.dart';
 
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
-  SettingsBloc() : super(InitialState()) {
+  SettingsServices services = SettingsServices();
+  SettingsBloc() : super(LoadingSettingsState()) {
+    //this event is called in the constructor
+    on<FetchSettingsEvent>((event, emit) async {
+      // attempt to fetch data from memory
+      String? version = await services.fetchVersionFromMemory();
+      String? path = await services.fetchChromePath();
+
+      // if fetch from memory was unsuccessful, fetch from GitHub
+      version ??= await services.fetchVersionFromGitHub();
+      path ??= await services.findChrome();
+
+      emit(ViewSettingsState(version!, path!));
+    });
+
     on<CheckForUpdatesEvent>((event, emit) async {
       Process p;
 
@@ -19,8 +33,6 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       } else if (Platform.isLinux) {
         p = await Process.start('google-chrome', ['--version']);
       }
-
-      emit(InitialState());
     });
 
     on<UpdateEvent>((event, emit) {
@@ -31,5 +43,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         services.updateChromium();
       } else if (event.update == Update.software) {}
     });
+
+    add(FetchSettingsEvent());
   }
 }
