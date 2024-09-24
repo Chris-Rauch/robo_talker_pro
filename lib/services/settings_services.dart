@@ -119,7 +119,7 @@ class SettingsServices {
       fileName = 'chrome.exe';
       roots = [
         'C:\\Program Files\\Google\\Chrome\\Application',
-        'C:\\Program Files (x86)\\Google'
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application'
       ];
     } else if (Platform.isMacOS) {
       fileName = 'Google Chrome.app';
