@@ -11,15 +11,19 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   SettingsBloc() : super(LoadingSettingsState()) {
     //this event is called in the constructor
     on<FetchSettingsEvent>((event, emit) async {
-      // attempt to fetch data from memory
-      String? version = await services.fetchVersionFromMemory();
-      String? path = await services.fetchChromePath();
+      try {
+        // attempt to fetch data from memory
+        String? version = await services.fetchVersionFromMemory();
+        String? path = await services.fetchChromePath();
 
-      // if fetch from memory was unsuccessful, fetch from GitHub
-      version ??= await services.fetchVersionFromGitHub();
-      path ??= await services.findChrome();
+        // if fetch from memory was unsuccessful, fetch from GitHub
+        version = await services.fetchVersionFromGitHub() ?? 'Cannot verify';
+        path = await services.findChrome() ?? 'Verify before proceeding';
 
-      emit(ViewSettingsState(version!, path!));
+        emit(ViewSettingsState(version, path));
+      } catch (e) {
+        emit(ErrorState(e));
+      }
     });
 
     on<CheckForUpdatesEvent>((event, emit) async {

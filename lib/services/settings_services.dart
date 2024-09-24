@@ -16,6 +16,7 @@ class SettingsServices {
     _version = rhs;
     save(Keys.software_version.name, version);
   }
+
   set chromePath(String rhs) {
     _chromePath = rhs;
     save(Keys.chrome_path.name, _chromePath!);
@@ -111,29 +112,35 @@ class SettingsServices {
   /// Returns a path to the chrome exe. It looks recursively starting at root
   Future<String?> findChrome() async {
     String? fileName;
-    String? root;
+    List<String> roots;
+    String version = '';
 
     if (Platform.isWindows) {
       fileName = 'chrome.exe';
-      root = 'C:\\Program Files\\Google\\Chrome\\Application';
+      roots = [
+        'C:\\Program Files\\Google\\Chrome\\Application',
+        'C:\\Program Files (x86)\\Google'
+      ];
     } else if (Platform.isMacOS) {
       fileName = 'Google Chrome.app';
-      root = '/Applications';
+      roots = ['/Applications'];
+    } else {
+      roots = [];
     }
 
-    final dir = Directory(root!);
-
-    if (!dir.existsSync()) {
-      return '';
-    }
-
-    for (var file in dir.listSync(recursive: true, followLinks: false)) {
-      if (file is File && file.path.endsWith(fileName!)) {
-        return file.path; // File found, return the path
+    for (var root in roots) {
+      final dir = Directory(root);
+      if (dir.existsSync()) {
+        for (var file in dir.listSync(recursive: true, followLinks: false)) {
+          if (file is File && file.path.endsWith(fileName!)) {
+            chromePath = file.path;
+            return file.path; // File found, return the path
+          }
+        }
       }
     }
 
-    return '';
+    return version; // file not found
   }
 
   /// Description: Fetches software version from memory. Returns null if it's
@@ -149,11 +156,10 @@ class SettingsServices {
     String repo = 'https://github.com/Chris-Rauch/robo_talker_pro.git';
     String homeDirPath =
         Platform.environment['HOME'] ?? Platform.environment['USERPROFILE']!;
-    Directory dir = Directory(homeDirPath);
+    Directory dir = Directory('$homeDirPath/temp_dir_robo_talker_pro');
+
     if (dir.existsSync()) {
-      dir = Directory('$homeDirPath/robo_talker_pro');
-    } else {
-      return null;
+      return '';
     }
 
     await pullFromGit(repo, dir.path);
