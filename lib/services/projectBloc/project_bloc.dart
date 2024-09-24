@@ -101,8 +101,6 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           throw Exception('Couldn\'t find contact list');
         }
 
-        // TODO if the user updates this data, then contactList needs to be altered
-
         // post to RoboTalker website
         RoboServices job = RoboServices(jobName, startDate, endDate, callerId,
             LATE_PAYMENT_MESSAGE, jsonDecode(contactList), username, zKey);
@@ -120,12 +118,12 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           keepTrying = !(await job.getJobDetails());
           estimatedCompletion =
               estimatedCompletion.add(const Duration(minutes: 5));
-          print('keep trying loop: $testingInt');
+          print('keep trying loop: ${testingInt++}');
         }
 
         // start memo'ing accounts
         Process process = await Process.start('python', [
-          "C:\\Users\\rauch\\Projects\\flutter\\robo_talker_pro\\lib\\scripts\\memo.py",
+          "C:\\Users\\MatthewRauch\\robo_talker_pro\\lib\\scripts\\memo.py",
           PROJECT_DATA_PATH!,
           'head',
           await loadData(Keys.teUsername.toLocalizedString()),

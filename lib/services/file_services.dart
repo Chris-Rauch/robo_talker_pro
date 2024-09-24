@@ -102,9 +102,10 @@ class FileServices {
       List<Data?> row = sheet.rows[x];
 
       // if no exceptions were found, create the contact
-      bool exception = (!contains(noCallAgreement, row) &&
-          !contains(noNums, row) &&
-          !contains(duplicates, row));
+      //TODO fix this
+      bool exception = contains(noCallAgreement, row) ||
+          contains(noNums, row) ||
+          contains(duplicates, row);
 
       if (!exception) {
         contactList.add({
