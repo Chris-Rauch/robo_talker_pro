@@ -1,6 +1,6 @@
 /// The FileServices class handles the Late Payment Report provided by the user.
 /// It is responsible for the following tasks:
-/// 
+///
 /// 1. Checking for valid input (i.e., verifying the file exists).
 /// 2. Reading the file and returning a list of contacts in JSON format.
 ///    - The contact list is structured as follows:
@@ -35,7 +35,7 @@ import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 class FileServices {
   final Excel _latePaymentFile; // user provided file
   final Excel _reportFile; // contains no nums and duplicate nums
-  final String _reportFileLocation; 
+  final String _reportFileLocation;
   final String _projectFileLocation;
   final List<dynamic> _nca;
 
@@ -60,13 +60,13 @@ class FileServices {
     }
   }
 
-  /// Description: This asynchronous function processes late payment contacts 
-  ///   and returns a list of these contacts in JSON format for use in a REST 
-  ///   POST request. It filters out contacts that are on the 
-  ///   "No Call Agreement" list or have invalid phone numbers, and logs these 
+  /// Description: This asynchronous function processes late payment contacts
+  ///   and returns a list of these contacts in JSON format for use in a REST
+  ///   POST request. It filters out contacts that are on the
+  ///   "No Call Agreement" list or have invalid phone numbers, and logs these
   ///   exceptions to a report file.
   /// Returns:
-  ///   [Future<String>] A JSON-encoded string representing a list of valid 
+  ///   [Future<String>] A JSON-encoded string representing a list of valid
   ///   contacts.
   Future<String> handleLatePayment() async {
     List<Map<String, dynamic>> contactList = [];
@@ -102,7 +102,6 @@ class FileServices {
       List<Data?> row = sheet.rows[x];
 
       // if no exceptions were found, create the contact
-      //TODO fix this
       bool exception = contains(noCallAgreement, row) ||
           contains(noNums, row) ||
           contains(duplicates, row);
@@ -123,11 +122,11 @@ class FileServices {
   }
 
   /// Description: This function generates a job name based on the header of the
-  ///   input file associated with late payments. It retrieves the name from the 
-  ///   first cell of the first row in the default sheet, formats it, and 
+  ///   input file associated with late payments. It retrieves the name from the
+  ///   first cell of the first row in the default sheet, formats it, and
   ///   returns it as a string.
   /// Returns:
-  ///   [Stirng] A formatted job name, or an empty string if the header is not 
+  ///   [Stirng] A formatted job name, or an empty string if the header is not
   ///   found.
   String getGroupName() {
     String sheetName = _latePaymentFile.getDefaultSheet() ??
@@ -172,15 +171,15 @@ class FileServices {
     return DateFormat('yMMMd').format(time);
   }
 
-  /// Description: This function checks whether a given company, identified by 
-  ///   its agent code, is listed in the "No Call Agreement" (NCA) list. It 
+  /// Description: This function checks whether a given company, identified by
+  ///   its agent code, is listed in the "No Call Agreement" (NCA) list. It
   ///   compares the provided agent code against the agent codes in the NCA list
   ///   to determine if a match exists.
   /// Params:
-  ///   [agentCode] (String): The agent code provided by the user that will be 
+  ///   [agentCode] (String): The agent code provided by the user that will be
   ///     checked against the NCA list.
   /// Returns:
-  ///   [bool] Returns true if the agent code is found in the NCA list; 
+  ///   [bool] Returns true if the agent code is found in the NCA list;
   ///   otherwise, returns false.
   bool _noCallAgreement(String agentCode) {
     List<dynamic> nca = _nca;
@@ -193,13 +192,13 @@ class FileServices {
     return false;
   }
 
-  /// Description: This function checks if the given phone number matches any 
-  ///   of several predefined invalid formats. It returns true if the number is 
+  /// Description: This function checks if the given phone number matches any
+  ///   of several predefined invalid formats. It returns true if the number is
   ///   considered invalid, and false otherwise.
   /// Params:
-  ///   [number] (String): The phone number string to be checked. 
+  ///   [number] (String): The phone number string to be checked.
   /// Returns:
-  ///   [bool] - Returns true if the number matches any of the invalid formats, 
+  ///   [bool] - Returns true if the number matches any of the invalid formats,
   ///     otherwise returns false.
   /// Invalid Formats:
   ///   1) '(000) 000-0000'
@@ -217,10 +216,9 @@ class FileServices {
     }
   }
 
-  
-  /// Description: This function compares two date strings that may follow 
-  ///   various formats and returns the earlier of the two dates in the MMMM d, 
-  ///   yyyy format. It supports multiple input formats and ensures strict date 
+  /// Description: This function compares two date strings that may follow
+  ///   various formats and returns the earlier of the two dates in the MMMM d,
+  ///   yyyy format. It supports multiple input formats and ensures strict date
   ///   parsing for each.
   /// Parameters:
   ///   [date1] (String): The first date string to be compared.
@@ -273,8 +271,8 @@ class FileServices {
     }
   }
 
-  /// Description: This function takes two string representations of monetary 
-  ///   amounts, converts them to double, adds them together, and returns the 
+  /// Description: This function takes two string representations of monetary
+  ///   amounts, converts them to double, adds them together, and returns the
   ///   sum as a formatted string with two decimal places.
   /// Parameters:
   ///   [amount1] (String): The first monetary amount.
@@ -287,16 +285,16 @@ class FileServices {
     return ((x + y).toStringAsFixed(2));
   }
 
-  /// Description: This function adds a space between each character in a 
-  ///   contract number string. It's specifically designed to format contract 
-  ///   numbers for better readability when read aloud by automated systems, 
-  ///   such as robotalker.com. If the input is null, the function returns an 
+  /// Description: This function adds a space between each character in a
+  ///   contract number string. It's specifically designed to format contract
+  ///   numbers for better readability when read aloud by automated systems,
+  ///   such as robotalker.com. If the input is null, the function returns an
   ///   empty string.
   /// Parameters:
-  ///   [contractNumber] (String?): The contract number to be formatted. 
+  ///   [contractNumber] (String?): The contract number to be formatted.
   ///     It may be null.
   /// Returns:
-  ///   [String] The contract number with spaces between each character. If the 
+  ///   [String] The contract number with spaces between each character. If the
   ///     input is null, an empty string is returned.
   String _addSpaces(String? contractNumber) {
     String newString = '';
@@ -319,18 +317,18 @@ class FileServices {
     return contractNumber.replaceAll('and', ' and ');
   }
 
-  /// Description: This function writes a list of Data objects to an Excel file 
+  /// Description: This function writes a list of Data objects to an Excel file
   ///   row. Optionally, it adds a header to the row if provided. The function
-  ///   retrieves the default sheet from the Excel file, converts the Data 
-  ///   objects to CellValue, and appends the row to the sheet. It handles 
-  ///   exceptions and ensures the file is saved at the specified location 
+  ///   retrieves the default sheet from the Excel file, converts the Data
+  ///   objects to CellValue, and appends the row to the sheet. It handles
+  ///   exceptions and ensures the file is saved at the specified location
   ///   after writing.
-  /// Params: 
-  ///   [row] (List<Data?>): A list of Data objects (or null) that represent the 
+  /// Params:
+  ///   [row] (List<Data?>): A list of Data objects (or null) that represent the
   ///     row to be written to the Excel sheet.
-  ///   [header] (String?, optional): An optional string header to be added at 
+  ///   [header] (String?, optional): An optional string header to be added at
   ///     the beginning of the row. If provided, it will be written in the first
-  ///     column of the new row. 
+  ///     column of the new row.
   void _writeRowToFile(List<Data?> row, {String? header}) {
     try {
       String sheetName = _reportFile.getDefaultSheet() ??
@@ -362,14 +360,14 @@ class FileServices {
     }
   }
 
-/// Description: This function deletes a specified row in an Excel sheet by 
-///   setting the values of all cells in that row to null. It effectively 
-///   clears the row, making it appear empty.
-/// Params:
-///   [sheet] (Sheet): The Excel sheet from which the row will be deleted.
-///   [rowIndex] (int): The index of the row to be deleted (0-based).
-///   [numCols] (int): The number of columns in the row, indicating how many 
-///     cells to clear.
+  /// Description: This function deletes a specified row in an Excel sheet by
+  ///   setting the values of all cells in that row to null. It effectively
+  ///   clears the row, making it appear empty.
+  /// Params:
+  ///   [sheet] (Sheet): The Excel sheet from which the row will be deleted.
+  ///   [rowIndex] (int): The index of the row to be deleted (0-based).
+  ///   [numCols] (int): The number of columns in the row, indicating how many
+  ///     cells to clear.
   void deleteRow(Sheet sheet, int rowIndex, int numCols) {
     for (var colIndex = 0; colIndex < numCols; colIndex++) {
       sheet.updateCell(
@@ -378,15 +376,15 @@ class FileServices {
     }
   }
 
-  /// Description: This function formats a given name string by replacing any 
-  ///   ampersand (&) symbols with the word "AND" and removing apostrophes ('). 
-  ///   It ensures the name is cleaned up for better readability or consistency 
+  /// Description: This function formats a given name string by replacing any
+  ///   ampersand (&) symbols with the word "AND" and removing apostrophes (').
+  ///   It ensures the name is cleaned up for better readability or consistency
   ///   in output.
   /// Params:
   ///   [name] (String?): The name string to be formatted. It may be null.
   /// Returns:
-  ///   [String] A formatted string where all & symbols are replaced with "AND" 
-  ///   and all apostrophes are removed. If the input is null, an empty string 
+  ///   [String] A formatted string where all & symbols are replaced with "AND"
+  ///   and all apostrophes are removed. If the input is null, an empty string
   ///   is returned.
   String _formatName(String? name) {
     if (name == null) {
@@ -398,8 +396,8 @@ class FileServices {
   }
 
   /// Description: This function determines if two strings are similar enough to
-  ///   be considered the same person. It performs multiple checks, including 
-  ///   substring matching, word similarity percentage, and Levenshtein 
+  ///   be considered the same person. It performs multiple checks, including
+  ///   substring matching, word similarity percentage, and Levenshtein
   ///   distance, to evaluate the similarity between the two input strings.
   /// Params:
   ///   [lhs] (String): The first string to compare.
@@ -483,19 +481,19 @@ class FileServices {
 
   int MIN(int x, int y) => ((x) < (y) ? (x) : (y));
 
-  /// Description: This function scans an Excel sheet for contracts that do not 
-  ///   have valid phone numbers and returns them as a list. It excludes 
-  ///   contracts that are also on the "No Call Agreement" (NCA) list. The 
-  ///   function uses the _noNumber function to identify invalid phone numbers 
-  ///   and the _noCallAgreement function to check if the contract is on the 
+  /// Description: This function scans an Excel sheet for contracts that do not
+  ///   have valid phone numbers and returns them as a list. It excludes
+  ///   contracts that are also on the "No Call Agreement" (NCA) list. The
+  ///   function uses the _noNumber function to identify invalid phone numbers
+  ///   and the _noCallAgreement function to check if the contract is on the
   ///   NCA list.
   /// Params:
-  ///   [sheet] (Sheet): The Excel sheet containing rows of contract data. 
-  ///   Phone numbers are located in a specific column, and agent codes are 
+  ///   [sheet] (Sheet): The Excel sheet containing rows of contract data.
+  ///   Phone numbers are located in a specific column, and agent codes are
   ///   used to check for NCA status.
   /// Returns:
-  ///   [List<List<Data?>>] A list of rows (contracts) that do not have valid 
-  ///   phone numbers and are not part of the "No Call Agreement." Each row is 
+  ///   [List<List<Data?>>] A list of rows (contracts) that do not have valid
+  ///   phone numbers and are not part of the "No Call Agreement." Each row is
   ///   a list of Data? objects.
   List<List<Data?>> getNoNums(Sheet sheet) {
     List<List<Data?>> list = [];
@@ -514,16 +512,16 @@ class FileServices {
     return list;
   }
 
-  /// Description: This function scans through an Excel sheet and returns a 
-  ///   list of contracts that are on the "No Call Agreement" list. It checks 
-  ///   each row to determine if the contract’s agent code matches a predefined 
+  /// Description: This function scans through an Excel sheet and returns a
+  ///   list of contracts that are on the "No Call Agreement" list. It checks
+  ///   each row to determine if the contract’s agent code matches a predefined
   ///   set of conditions using the _noCallAgreement function.
   /// Parms:
-  ///   [sheet] (Sheet): The Excel sheet containing rows of contract data. 
-  ///   Each row represents a contract, with the agent code located in a 
+  ///   [sheet] (Sheet): The Excel sheet containing rows of contract data.
+  ///   Each row represents a contract, with the agent code located in a
   ///   specific column.
   /// Returns:
-  ///  [List<List<Data?>>] A list of rows (contracts) that are marked as part 
+  ///  [List<List<Data?>>] A list of rows (contracts) that are marked as part
   ///  of the "No Call Agreement." Each row is a list of Data? objects.
   List<List<Data?>> getNoCall(Sheet sheet) {
     List<List<Data?>> list = [];
@@ -540,19 +538,19 @@ class FileServices {
     return list;
   }
 
-  /// Description: This function scans through an Excel sheet and identifies 
-  ///   rows (contracts) with duplicate phone numbers. It returns a list of 
-  ///   contracts where the same phone number appears more than once. The 
-  ///   function excludes invalid phone numbers (such as placeholders) based on 
-  ///   the _noNumber check, ensuring that only meaningful duplicates are 
-  ///   captured. This is crucial to avoid data loss when using robotalker.com, 
+  /// Description: This function scans through an Excel sheet and identifies
+  ///   rows (contracts) with duplicate phone numbers. It returns a list of
+  ///   contracts where the same phone number appears more than once. The
+  ///   function excludes invalid phone numbers (such as placeholders) based on
+  ///   the _noNumber check, ensuring that only meaningful duplicates are
+  ///   captured. This is crucial to avoid data loss when using robotalker.com,
   ///   which automatically removes duplicate phone numbers.
   /// Params:
-  ///   [sheet] (Sheet): The Excel sheet containing rows of contract data, 
+  ///   [sheet] (Sheet): The Excel sheet containing rows of contract data,
   ///   with phone numbers stored in a specific column.
   /// Returns:
-  ///   [List<List<Data?>>] A list of rows (contracts) where phone numbers 
-  ///   appear more than once in the sheet. Each row is a list of Data? 
+  ///   [List<List<Data?>>] A list of rows (contracts) where phone numbers
+  ///   appear more than once in the sheet. Each row is a list of Data?
   ///   objects.
   List<List<Data?>> getDuplicates(Sheet sheet) {
     Map<String, List<List<Data?>>> hashMap = {};
@@ -585,33 +583,45 @@ class FileServices {
     return duplicates;
   }
 
-  /// Description: This function checks if a specific row of Data objects is 
-  ///   present in a given list of rows. It mimics checking if a row exists in 
-  ///   an Excel file by comparing the string values of each Data.value in the 
+  /// Description: This function checks if a specific row of Data objects is
+  ///   present in a given list of rows. It mimics checking if a row exists in
+  ///   an Excel file by comparing the string values of each Data.value in the
   ///   row. The function returns true if the row is found in the list and false
-  ///   otherwise. If the row contains any null values, it returns false 
+  ///   otherwise. If the row contains any null values, it returns false
   ///   immediately.
   /// Params:
-  ///   [list] (List<List<Data?>>): A list of rows, where each row is a list of 
+  ///   [list] (List<List<Data?>>): A list of rows, where each row is a list of
   ///   Data? objects.
   ///   [row] (List<Data?>): The row of Data? objects to check for in the list.
-  /// Returns: 
-  ///   [bool] The function returns true if all Data.value entries in a row 
+  /// Returns:
+  ///   [bool] The function returns true if all Data.value entries in a row
   ///   match, and false otherwise.
   bool contains(List<List<Data?>> list, List<Data?> row) {
-    if (row.contains(null)) return false;
-    bool isEqual = true;
+    if (row.contains(null)) {
+      return false;
+    }
+    bool isEqual = false;
+
+    // loop through list
     for (int x = 0; x < list.length; ++x) {
+      isEqual = true;
       List<Data?> listItem = list[x];
+
+      // loop through both rows, comparing their cell values
+      // don't loop if their lengths are different
       if (listItem.length == row.length) {
+        innerLoop:
         for (int y = 0; y < row.length; ++y) {
-          if (listItem[y]!.value.toString() != row[y]!.value.toString()) {
+          String val1 = listItem[y]?.value.toString() ?? '';
+          String val2 = row[y]?.value.toString() ?? '';
+          if (val1 != val2) {
             isEqual = false;
-            break;
+            break innerLoop;
           }
         }
-      } else {
-        isEqual = false;
+        if (isEqual == true) {
+          break;
+        }
       }
     }
     return isEqual;
