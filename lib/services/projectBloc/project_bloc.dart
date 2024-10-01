@@ -122,8 +122,9 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         }
 
         // start memo'ing accounts
+        String memoPath = await loadData(Keys.memo_path.name);
         Process process = await Process.start('python', [
-          "C:\\Users\\MatthewRauch\\robo_talker_pro\\lib\\scripts\\memo.py",
+          memoPath,
           PROJECT_DATA_PATH!,
           'head',
           await loadData(Keys.teUsername.toLocalizedString()),

@@ -103,8 +103,8 @@ class FileServices {
 
       // if no exceptions were found, create the contact
       bool exception = contains(noCallAgreement, row) ||
-          contains(noNums, row) ||
-          contains(duplicates, row);
+          contains(noNums, row) /*||
+          contains(duplicates, row)*/;
 
       if (!exception) {
         contactList.add({

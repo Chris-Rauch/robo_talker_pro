@@ -26,7 +26,10 @@ enum Keys {
   callData,
   chrome_path,
   request_body,
-  software_version
+  software_version,
+  memo_path,
+  request_path,
+  get_path
 }
 
 extension KeyExtension on Keys {
@@ -70,6 +73,12 @@ extension KeyExtension on Keys {
         return 'requestbody';
       case Keys.software_version:
         return 'software_version';
+      case Keys.memo_path:
+        return 'memo_path';
+      case Keys.request_path:
+        return 'request_path';
+      case Keys.get_path:
+        return 'get_path';
       default:
         throw ArgumentError('Unknown key: $this');
     }

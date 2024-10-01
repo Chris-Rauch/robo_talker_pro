@@ -1,119 +1,107 @@
-import 'dart:convert';
+//import 'dart:convert';
 import 'dart:io';
-import 'package:archive/archive.dart';
-import 'package:http/http.dart' as http;
+//import 'package:archive/archive.dart';
+//import 'package:http/http.dart' as http;
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
+import 'package:robo_talker_pro/services/settingsBloc/settings_bloc.dart';
 
 class SettingsServices {
   String? _version;
   String? _chromePath;
+  String? _memoPath;
+  String? _requestPath;
+  String? _getPath;
 
-  // getters and setters
-  String get version => _version ?? '';
-  String get chromePath => _chromePath ?? '';
-  set version(String rhs) {
+  // === getters and setters ===
+  // Getters will search for the variable using the this->load function
+  String? get version {
+    load(Keys.software_version.name).then((value) {
+      _version = value;
+    });
+
+    return _version;
+  }
+
+  String? get chromePath {
+    if (_chromePath == null) {
+      load(Keys.chrome_path.name).then((value) {
+        _chromePath = value;
+      });
+    }
+    return _chromePath;
+  }
+
+  String? get memoPath {
+    if (_memoPath == null) {
+      load(Keys.memo_path.name).then((value) {
+        _memoPath = value;
+      });
+    }
+    return _memoPath;
+  }
+
+  String? get requestPath {
+    if (_requestPath == null) {
+      load(Keys.request_path.name).then((value) {
+        _requestPath = value;
+      });
+    }
+    return _requestPath;
+  }
+
+  String? get getPath {
+    if (_getPath == null) {
+      load(Keys.get_path.name).then((value) {
+        _getPath = value;
+      });
+    }
+    return _getPath;
+  }
+
+  // Setters will try attempt to save the data using this->save function
+  set version(String? rhs) {
     _version = rhs;
-    save(Keys.software_version.name, version);
+    save(Keys.software_version.name, _version).then((value) => null);
   }
 
-  set chromePath(String rhs) {
+  set chromePath(String? rhs) {
     _chromePath = rhs;
-    save(Keys.chrome_path.name, _chromePath!);
+    save(Keys.chrome_path.name, _chromePath);
   }
 
-  /// Makes an http get request to check the latest chrome version
-  Future<String> fetchLatestChromeVersion() async {
-    final response = await http.get(Uri.parse(
-        'https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/VERSION'));
-    if (response.statusCode == 200) {
-      // Parse the response to extract the version number
-      // This is an example; the exact implementation will depend on the data format
-      final versionData = json.decode(response.body);
-      return versionData['version']; // Example key, depends on the response
-    } else {
-      throw Exception('Failed to load latest Chrome version');
-    }
+  set memoPath(String? rhs) {
+    _memoPath = rhs;
+    save(Keys.memo_path.name, _memoPath);
   }
 
-  Future<void> updateChromium() async {
-    try {
-      // Define paths and URLs
-      String username = Platform.environment['USERNAME'] ?? 'Unknown';
-      String downloadUrl =
-          'https://download-chromium.appspot.com/dl/Win_x64?type=snapshots';
-      String savePath = 'C:\\Users\\$username\\Downloads\\chromium.zip';
-      String unzipDir = 'C:\\Users\\$username\\AppData\\Local\\Chromium';
-      String installDir = 'C:\\Users\\$username\\AppData\\Local\\Chromium';
-
-      // Download the build
-      await downloadChromium(downloadUrl, savePath);
-
-      // Unzip the build
-      await unzipChromium(savePath, unzipDir);
-
-      // Replace the existing installation
-      await replaceChromiumInstallation(unzipDir, installDir);
-
-      print('Chromium has been updated to the latest version.');
-    } catch (e) {
-      print('Failed to update Chromium: $e');
-    }
+  set requestPath(String? rhs) {
+    _requestPath = rhs;
+    save(Keys.request_path.name, _requestPath);
   }
 
-  String? getDefaultInstallPath() {
-    if (Platform.isWindows) {
-      return r'C:\Program Files\MyApp\Chromium';
-    } else if (Platform.isMacOS) {
-      return '/Applications/MyApp/Chromium';
-    } else if (Platform.isLinux) {
-      return '/usr/local/MyApp/Chromium';
-    }
-    return null;
+  set getPath(String? rhs) {
+    _getPath = rhs;
+    save(Keys.get_path.name, _getPath);
   }
 
-  Future<void> downloadChromium(String downloadUrl, String savePath) async {
-    var uri = Uri.https(
-        'download-chromium.appspot.com', '/dl/Win_x64', {'type': 'snapshots'});
-    var response = await http.get(uri);
-
-    if (response.statusCode == 200) {
-      File file = File(savePath);
-      file.writeAsBytesSync(response.bodyBytes);
-    } else {
-      print('Exited with status code: ${response.statusCode}');
-    }
+  /// Description: Attempts to initialize all the variable from memory.
+  Future<void> init() async {
+    version = await load(Keys.software_version.name);
+    chromePath = await load(Keys.chrome_path.name);
+    memoPath = await load(Keys.memo_path.name);
+    requestPath = await load(Keys.request_path.name);
+    getPath = await load(Keys.get_path.name);
   }
 
-  Future<void> unzipChromium(String savePath, String unzipDir) async {
-    // read zip file from disk
-    final file = File(savePath);
-    final bytes = file.readAsBytesSync();
-
-    //decode zip file
-    final archive = ZipDecoder().decodeBytes(bytes);
-
-    // extract contents
-    for (final file in archive) {
-      final filename = '$unzipDir/${file.name}';
-      if (file.isFile) {
-        final outFile = File(filename);
-        await outFile.create(recursive: true);
-        await outFile.writeAsBytes(file.content as List<int>);
-      } else {
-        await Directory(filename).create(recursive: true);
-      }
-    }
-  }
-
-  Future<void> replaceChromiumInstallation(
-      String unzipdir, String installDir) async {}
-
-  /// Returns a path to the chrome exe. It looks recursively starting at root
+  /// Desription: Returns a path to the chrome exe. It looks recursively
+  ///   starting at root. This path is needed for the memo.py script
+  /// Returns:
+  ///   Future<String?> - A path to the chrome executable. Null if not found.
   Future<String?> findChrome() async {
     String? fileName;
     List<String> roots;
-    String version = '';
+    String? version;
 
     if (Platform.isWindows) {
       fileName = 'chrome.exe';
@@ -151,6 +139,10 @@ class SettingsServices {
     return await load(Keys.software_version.name);
   }
 
+  /// Description: Fetches software version my GitHub repo. If found, save
+  ///   version to memory.
+  /// Return:
+  ///   [Future<String?>] - The version number as a string or null
   Future<String?> fetchVersionFromGitHub() async {
     String version = '';
     String repo = 'https://github.com/Chris-Rauch/robo_talker_pro.git';
@@ -162,7 +154,7 @@ class SettingsServices {
       return '';
     }
 
-    await pullFromGit(repo, dir.path);
+    await _pullFromGit(repo, dir.path);
 
     // read the file
     File markDownFile = File('${dir.path}/README.md');
@@ -178,6 +170,7 @@ class SettingsServices {
     dir.deleteSync(recursive: true);
 
     // save the data
+
     this.version = version;
 
     return version;
@@ -185,7 +178,10 @@ class SettingsServices {
 
   /// Description: Uses the Dart Process class to run git clone. RepositoryUrl
   ///   is the repo on GitHub and dir is the destination on the local device
-  Future<void> pullFromGit(String repositoryUrl, String destinationDir) async {
+  /// Returns:
+  ///   Future<void> - Clones a repo on the local device. Make sure permissions
+  ///   for folders are set.
+  Future<void> _pullFromGit(String repositoryUrl, String destinationDir) async {
     // Clone the repository to a temporary directory
     var tempDir = Directory.systemTemp.createTempSync();
     var gitCloneCommand = ['git', 'clone', repositoryUrl, tempDir.path];

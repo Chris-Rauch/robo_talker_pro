@@ -120,8 +120,9 @@ class RoboServices {
 
   /// HTTP handlers
   Future<int> post() async {
+    String requestPath = await loadData(Keys.request_path.name);
     Process process = await Process.start('python', [
-      "C:\\Users\\MatthewRauch\\robo_talker_pro\\lib\\scripts\\request.py",
+      requestPath,
       'POST',
       getUrl(RequestType.multiJobPost).toString(),
       jsonEncode(getHeader()),
@@ -197,8 +198,9 @@ class RoboServices {
     // Wait the specified amount of time and then try and grab job details
     await Future.delayed(timeToWait, () async {
       print('awaiting the delayed process');
+      String getPath = await loadData(Keys.get_path.name);
       Process process = await Process.start('python', [
-        "C:\\Users\\MatthewRauch\\robo_talker_pro\\lib\\scripts\\get.py",
+        getPath,
         'GET',
         getUrl(RequestType.jobDetails).toString(),
         jsonEncode(getHeader()),
