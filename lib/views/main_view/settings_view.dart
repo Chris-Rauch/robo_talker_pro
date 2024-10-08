@@ -28,21 +28,7 @@ class SettingsViewState extends State<SettingsView> {
     return BlocListener<SettingsBloc, SettingsState>(
       listener: (context, state) {
         if (state is ErrorState) {
-          showDialog(
-            context: context,
-            builder: (context) {
-              return AlertDialog(
-                title: const Text("Error"),
-                content: Text(state.e.toString()),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text("OK"),
-                  ),
-                ],
-              );
-            },
-          );
+          _buildPopUp(context, state.e.toString());
         }
       },
       child: BlocBuilder<SettingsBloc, SettingsState>(
@@ -161,92 +147,61 @@ class SettingsViewState extends State<SettingsView> {
     );
   }
 
-  Future<void> _selectFile(
-      BuildContext context, TextEditingController controller) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      allowMultiple: false,
-      type: FileType.custom,
-      allowedExtensions: ['py'],
-    );
-
-    if ((result != null) && (result.files.single.path != null)) {
-      setState(() {
-        controller.text = result.files.single.path ?? "";
-      });
-    }
-  }
-}
-
-Widget _buildSectionHeader(String title) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 20),
-    child: Text(
-      title,
-      style: const TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+        ),
       ),
-    ),
-  );
-}
-
-Widget _buildSettingRow(String label, IconData icon, String data) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 20),
-    child: Row(
-      children: [
-        Icon(
-          icon,
-          size: 30,
-        ),
-        const SizedBox(width: 20),
-        Expanded(
-          child: Text(
-            '$label $data',
-            style: const TextStyle(fontSize: 20),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            // Implement update action for the specific item
-          },
-          child: const Text("Update"),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildSettingRowCustomImage(
-    BuildContext context, label, String iconPath) {
-  Update? update;
-  if (label == 'Software') {
-    update = Update.software;
+    );
   }
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 20),
-    child: Row(
-      children: [
-        Image.asset(
-          iconPath,
-          width: 30,
-          height: 30,
-        ),
-        const SizedBox(width: 20),
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 20),
+
+  Widget _buildSettingRow(String label, IconData icon, String data) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 30,
           ),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            // Implement update action for the specific item
-            context.read<SettingsBloc>().add(UpdateEvent(update!));
-          },
-          child: const Text("Update"),
-        ),
-      ],
-    ),
-  );
+          const SizedBox(width: 20),
+          Expanded(
+            child: Text(
+              '$label $data',
+              style: const TextStyle(fontSize: 20),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // Implement update action for the specific item
+            },
+            child: const Text("Update"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _buildPopUp(BuildContext context, String messge) async {
+    final result = await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Error"),
+          content: Text(messge),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }

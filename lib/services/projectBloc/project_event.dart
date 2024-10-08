@@ -34,3 +34,5 @@ class PostJobEvent extends ProjectEvent {
   PostJobEvent(
       {required this.jobName, required this.startTime, required this.endTime});
 }
+
+class LoadingEvent extends ProjectEvent {}

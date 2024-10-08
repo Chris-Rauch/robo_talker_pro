@@ -25,6 +25,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         emit(ViewSettingsState(services.version, services.chromePath,
             services.memoPath, services.requestPath, services.getPath));
       } catch (e) {
+        // TODO must handle all error here. If e is thrown, then the UI is left at a loading state
         emit(ErrorState(e));
       }
     });

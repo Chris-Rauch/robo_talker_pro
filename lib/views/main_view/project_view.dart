@@ -28,6 +28,7 @@ class ProjectViewState extends State<ProjectView> {
   DateTime _stopDate = DateTime(
       DateTime.now().year, DateTime.now().month, DateTime.now().day, 12, 30);
   Widget? currentWidget;
+  bool _isLoading = true;
 
 /*
   @override
@@ -45,7 +46,7 @@ class ProjectViewState extends State<ProjectView> {
       listener: (context, state) {
         if (state is ProjectErrorState) {
           showSnackBarAfterBuild(context, state.error);
-        }
+        } else if (state is ProjectLoadingState) {}
       },
       child: BlocBuilder<ProjectBloc, ProjectState>(
         builder: (context, state) {

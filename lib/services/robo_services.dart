@@ -217,7 +217,7 @@ class RoboServices {
       String response = 'Response: ';
       stdoutStream.listen((data) async {
         int startIndex;
-        print('stdout: $data');
+        //print('stdout: $data');
         if (data.contains(statusCode)) {
           startIndex = data.indexOf(statusCode);
           startIndex += statusCode.length;
@@ -235,7 +235,7 @@ class RoboServices {
         }
 
         if (!response.contains('No record found.')) {
-          print('Response: $response');
+          //print('Response: $response');
           success = true;
           String contactList = await loadData(
               Keys.contactlist.toLocalizedString(),
@@ -250,7 +250,7 @@ class RoboServices {
 
       // Handle stderr
       stderrStream.listen((data) {
-        print('stderr: $data');
+        //print('stderr: $data');
         throw Exception(data);
       });
       await process.exitCode;

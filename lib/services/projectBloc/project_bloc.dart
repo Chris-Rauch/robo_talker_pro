@@ -29,13 +29,13 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     /// project. Parse the file to get contact info and save necessary data
     /// for the project.
     on<FilePathSelectedEvent>((event, emit) async {
+      emit(ProjectLoadingState());
       String? filePath = event.filePath;
       String? folderPath = event.folderPath;
       ProjectType projectType = event.projectType;
       String contacts = '';
 
       try {
-        emit(ProjectLoadingState());
         // check user input
         if (filePath == null || folderPath == null) {
           throw Exception('Please make your selections');
@@ -80,6 +80,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
 
     /// All necessary information has been received. Make HTTP request
     on<PostJobEvent>((event, emit) async {
+      emit(ProjectLoadingState());
       String jobName = event.jobName;
       DateTime startDate = event.startTime.add(const Duration(hours: 3));
       DateTime endDate = event.endTime.add(const Duration(hours: 3));
@@ -112,13 +113,14 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         }
 
         // wait for calls to finish and grab their info
-        int testingInt = 0;
+        //int testingInt = 0;
         while (keepTrying) {
+          //print('keep trying loop: ${testingInt++}');
+          //print("Estimated completion: ${estimatedCompletion.toString()}");
           emit(PollingResourceState(estimatedCompletion));
           keepTrying = !(await job.getJobDetails());
           estimatedCompletion =
               estimatedCompletion.add(const Duration(minutes: 5));
-          print('keep trying loop: ${testingInt++}');
         }
 
         // start memo'ing accounts
@@ -137,25 +139,33 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         await for (final output in process.stdout) {
           String pipe = String.fromCharCodes(output);
           List<String> pipeSections = pipe.split('~');
+          print("Pipe: $pipe");
 
           if (pipeSections.length == 4) {
+            print("Pipe Sections ${pipeSections[0]}");
             double percent = double.parse(pipeSections[0]); // 1.0
             //double estimatedTime = double.parse(pipeSections[1]); // 10 (in minutes)
             //String success = pipeSections[2]; // success/failed
             //String row = pipeSections[3]; // ['Me', '7143290331', 'Answering Machine', '1', '9494709674', '8/26/2024 5:35:00 PM', '80', '8/26/2024 5:36:37 PM', '3021657', '', '', '8/26/2024 5:35:17 PM', '28', '1008603', 'My agency', '1763.46', 'Aug 12, 2024', 'M W F 1 0 1 3 1 4']
+            print("percent: $percent");
             emit(ProgressState(percent));
           }
-
-          print('stdout: $output');
         }
 
         exitCode = await process.exitCode;
-        print('Exit code: $exitCode');
         if (exitCode == 0) {
           emit(JobCompleteState());
         }
       } catch (e) {
         print('Post Job Event Error: $e');
+        emit(ProjectErrorState(e));
+      }
+    });
+
+    on<LoadingEvent>((event, emit) {
+      try {
+        emit(ProjectLoadingState());
+      } catch (e) {
         emit(ProjectErrorState(e));
       }
     });
