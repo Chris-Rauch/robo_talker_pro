@@ -13,6 +13,7 @@ import 'package:http/http.dart' as http;
 import 'package:robo_talker_pro/auxillary/constants.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
+import 'package:robo_talker_pro/services/settings_services.dart';
 
 class RoboServices {
   // auth elems
@@ -23,14 +24,14 @@ class RoboServices {
   String? _auth, _cookie;
 
   // body elems
+  String? _body;
   final String _whatToDo = 'SendTtsMessage',
       _messageId = '0',
       _customerName = 'Chris Rauch',
       _extraReportEmail = 'rauch.christopher13@gmail.com';
-  final String? _jobName, _optCallerId, _messageText;
-  final List<dynamic>? _contactList;
-  final DateTime _runDateTime;
-  final DateTime _endDateTime;
+  String? _jobName, _optCallerId, _messageText;
+  List<dynamic>? _contactList;
+  DateTime? _runDateTime, _endDateTime;
 
   // ashx request params
   final String _userId = '2402';
@@ -44,17 +45,110 @@ class RoboServices {
   final String _login = "/Login";
   final String _config = "/Config";
 
-  // constructor
-  RoboServices(
-      this._jobName,
-      this._runDateTime,
-      this._endDateTime,
-      this._optCallerId,
-      this._messageText,
-      this._contactList,
-      this._userName,
-      this._zKey)
-      : _auth = 'Basic ${base64Encode(utf8.encode('$_userName:$_zKey'))}';
+  // getters
+  Future<String?> get userName async {
+    _userName ??= await load(Keys.roboUsername.name);
+    return _userName;
+  }
+
+  Future<String?> get zKey async {
+    _zKey ??= await load(Keys.z_token.name);
+    return _zKey;
+  }
+
+  String? get auth {
+    if (_userName != null && _zKey != null) {
+      _auth = 'Basic ${base64Encode(utf8.encode('$_userName:$_zKey'))}';
+    } else {
+      _auth = null;
+    }
+    return _auth;
+  }
+
+  String? get cookie {
+    return _cookie;
+  }
+
+  Future<String?> get jobName async {
+    _jobName ??= await load(Keys.jobName.name, path: PROJECT_DATA_PATH);
+    return _jobName;
+  }
+
+  Future<String?> get callerID async {
+    _optCallerId ??= await load(Keys.caller_id.name);
+    return _optCallerId;
+  }
+
+  String? get message {
+    _messageText = LATE_PAYMENT_MESSAGE;
+    return _messageText;
+  }
+
+  Future<List<dynamic>?> get contactList async {
+    _contactList ??= await load(Keys.contactlist.name, path: PROJECT_DATA_PATH);
+    return _contactList;
+  }
+
+  Future<DateTime?> get runDateTime async {
+    _runDateTime ??= await load(Keys.runDateTime.name, path: PROJECT_DATA_PATH);
+    _runDateTime?.subtract(const Duration(hours: 3));
+    return _runDateTime;
+  }
+
+  Future<DateTime?> get endDateTime async {
+    _endDateTime ??= await load(Keys.endDateTime.name, path: PROJECT_DATA_PATH);
+    _endDateTime?.subtract(const Duration(hours: 3));
+    return _endDateTime;
+  }
+
+  Future<String?> get jobID async {
+    _jobId ??= await load(Keys.jobID.name, path: PROJECT_DATA_PATH);
+    return _jobId;
+  }
+
+  // setters
+  Future<void> setJobName(String? jobName) async {
+    await save(Keys.jobName.name, jobName, path: PROJECT_DATA_PATH);
+    _jobName = jobName;
+  }
+
+  Future<void> setRunDateTime(DateTime? dateTime) async {
+    dateTime = dateTime!.subtract(const Duration(hours: 3));
+    await save(Keys.runDateTime.name, dateTime, path: PROJECT_DATA_PATH);
+    _runDateTime = dateTime;
+  }
+
+  Future<void> setEndDateTime(DateTime? dateTime) async {
+    dateTime = dateTime!.subtract(const Duration(hours: 3));
+    await save(Keys.endDateTime.name, dateTime, path: PROJECT_DATA_PATH);
+    _endDateTime = dateTime;
+  }
+
+  Future<void> setJobID(String? jobID) async {
+    await save(Keys.jobID.name, jobID, path: PROJECT_DATA_PATH);
+    _jobId = jobID;
+  }
+
+  Future<void> setBody(RequestType request) async {
+    String? body = jsonEncode(getBody(request));
+    await save(Keys.request_body.name, body, path: PROJECT_DATA_PATH);
+    _body = body;
+  }
+
+  /// Description: Attempts to fetch data data that is saved outside of the
+  ///   program. This data is necessary to make HTTP requests to the robotalker
+  ///   website (robotalker.com)
+  Future<void> init() async {
+    await jobName;
+    await runDateTime;
+    await endDateTime;
+    await callerID;
+    message;
+    await contactList;
+    await userName;
+    await zKey;
+    auth;
+  }
 
   /// Returns the HTTP body based on the request type
   Map<String, dynamic> getBody(RequestType requestType) {
@@ -118,9 +212,24 @@ class RoboServices {
     return Uri.parse(url);
   }
 
-  /// HTTP handlers
-  Future<int> post() async {
-    String requestPath = await loadData(Keys.request_path.name);
+  /// Description: Makes an HTTP post to robotalker.com to schedule a job for
+  ///   automated phone calls. Upon a successful post, the robotalker servers
+  ///   should return a json string containing the JobID, SmsID and CallerID.
+  ///   these values are saved to the appropriate data members. The Data Manager
+  ///   functions 'save' and 'load' also handle this data.
+  /// Returns:
+  /// Throws:
+  /// - Exception('Python process request.py exited with $statusCode')
+  /// - Exception('Could not post job to RoboTalker website')
+  /// - Exception('Could not locate the request path. These can be changed in the Settings Tab');
+  Future<void> multiJobPost() async {
+    SettingsServices settings = SettingsServices();
+    String? requestPath = await settings.requestPath;
+    if (requestPath == null) {
+      throw Exception(
+          'Could not locate the request path. These can be changed in the Settings Tab');
+    }
+
     Process process = await Process.start('python', [
       requestPath,
       'POST',
@@ -147,8 +256,6 @@ class RoboServices {
       startIndex += response.length;
       response = data.substring(startIndex);
 
-      print('Repsonse: $response');
-
       if (statusCode != '200') {
         throw Exception('Python process request.py exited with $statusCode');
       }
@@ -156,22 +263,17 @@ class RoboServices {
       // json data that I want
       var responseJson = jsonDecode(response);
       String? jobId = responseJson['callId'];
-      _jobId = jobId;
       //responseJson['smsId'];
       //responseJson['callId'];
-
-      saveData(Keys.jobID.toLocalizedString(), jobId, path: PROJECT_DATA_PATH);
-
-      print(data);
+      setJobID(jobId);
     });
 
     // Handle stderr
-    stderrStream.listen((data) {
-      print('STDERR: $data');
-    });
+    stderrStream.listen((data) {});
 
-    return await process.exitCode;
-    //print('Python process exited with code: $exitCode');
+    if (await process.exitCode != 0) {
+      throw Exception('Could not post job to RoboTalker website');
+    }
   }
 
   /// Description: Fetches job details from the Robo Talker server in JSON
@@ -185,19 +287,15 @@ class RoboServices {
   ///   otherwise `false`.
   Future<bool> getJobDetails() async {
     DateTime now = DateTime.now();
-    Duration timeToWait = endDate.difference(now);
+    Duration timeToWait = (await endDateTime)!.difference(now);
     bool success = false;
-
-    print('time to wait: ${timeToWait.toString()}');
 
     // if difference is negative, the job should be over
     if (timeToWait.isNegative) {
-      print('Time to wait is negative');
       timeToWait = const Duration(minutes: 5);
     }
     // Wait the specified amount of time and then try and grab job details
     await Future.delayed(timeToWait, () async {
-      print('awaiting the delayed process');
       String getPath = await loadData(Keys.get_path.name);
       Process process = await Process.start('python', [
         getPath,
@@ -250,7 +348,6 @@ class RoboServices {
 
       // Handle stderr
       stderrStream.listen((data) {
-        //print('stderr: $data');
         throw Exception(data);
       });
       await process.exitCode;
@@ -282,10 +379,6 @@ class RoboServices {
 
     return jsonEncode(reportWithVars);
   }
-
-  String get authority => 'https://robotalker.com/REST/api';
-  DateTime get startDate => _runDateTime.subtract(const Duration(hours: 3));
-  DateTime get endDate => _endDateTime.subtract(const Duration(hours: 3));
 
   String shortenList(String jsonString) {
     List<dynamic> trimmedInput = [];
@@ -336,20 +429,16 @@ class RoboServices {
     return null;
   }
 
-  Future<http.StreamedResponse> getJobDetail() async {
-    // prep the data
-    var header = getHeader();
-    var body = getBody(RequestType.jobDetails);
-    var url = getUrl(RequestType.jobDetails);
+  /// Description: Custom Data Management class. Used to save user and program
+  ///   data. Current implementation saves data to disk.
+  Future<void> save(String key, dynamic data, {String? path}) async {
+    await saveData(key, data, path: path);
+  }
 
-    // GET JobDetails
-    var request = http.Request('GET', url);
-    request.body = jsonEncode(body);
-    request.headers.addAll(header);
-
-    http.StreamedResponse response = await request.send();
-
-    return response;
+  /// Description: Custom Data Management class. Used to load user and program
+  ///   data. Current implementation loads data to disk.
+  Future<dynamic> load(String key, {String? path}) async {
+    return await loadData(key);
   }
 }
 

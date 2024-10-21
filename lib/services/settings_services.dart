@@ -2,6 +2,7 @@
 import 'dart:io';
 //import 'package:archive/archive.dart';
 //import 'package:http/http.dart' as http;
+import 'package:http/http.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 import 'package:robo_talker_pro/services/settingsBloc/settings_bloc.dart';
@@ -13,89 +14,83 @@ class SettingsServices {
   String? _requestPath;
   String? _getPath;
 
-  // === getters and setters ===
-  // Getters will search for the variable using the this->load function
-  String? get version {
-    load(Keys.software_version.name).then((value) {
-      _version = value;
-    });
-
+  // getters
+  Future<String?> get version async {
+    _version ??= await load(Keys.software_version.name);
+    _version ??= await fetchVersionFromGitHub();
     return _version;
   }
 
-  String? get chromePath {
-    if (_chromePath == null) {
-      load(Keys.chrome_path.name).then((value) {
-        _chromePath = value;
-      });
-    }
+  Future<String?> get chromePath async {
+    _chromePath ??= await load(Keys.chrome_path.name);
+    _chromePath ??= await findChrome();
     return _chromePath;
   }
 
-  String? get memoPath {
-    if (_memoPath == null) {
-      load(Keys.memo_path.name).then((value) {
-        _memoPath = value;
-      });
-    }
+  Future<String?> get memoPath async {
+    _memoPath ??= await load(Keys.memo_path.name);
     return _memoPath;
   }
 
-  String? get requestPath {
-    if (_requestPath == null) {
-      load(Keys.request_path.name).then((value) {
-        _requestPath = value;
-      });
-    }
+  Future<String?> get requestPath async {
+    _requestPath ??= await load(Keys.request_path.name);
     return _requestPath;
   }
 
-  String? get getPath {
-    if (_getPath == null) {
-      load(Keys.get_path.name).then((value) {
-        _getPath = value;
-      });
-    }
+  Future<String?> get getPath async {
+    _getPath ??= await load(Keys.get_path.name);
     return _getPath;
   }
 
-  // Setters will try attempt to save the data using this->save function
-  set version(String? rhs) {
-    _version = rhs;
-    save(Keys.software_version.name, _version).then((value) => null);
+  // setters
+  Future<void> setVersion(String? version) async {
+    await save(Keys.software_version.name, version);
+    _version = version;
   }
 
-  set chromePath(String? rhs) {
-    _chromePath = rhs;
-    save(Keys.chrome_path.name, _chromePath);
+  Future<void> setChromePath(String? chromePath) async {
+    await save(Keys.chrome_path.name, chromePath);
+    _chromePath = chromePath;
   }
 
-  set memoPath(String? rhs) {
-    _memoPath = rhs;
-    save(Keys.memo_path.name, _memoPath);
+  Future<void> setMemoPath(String? memoPath) async {
+    await save(Keys.memo_path.name, memoPath);
+    _memoPath = memoPath;
   }
 
-  set requestPath(String? rhs) {
-    _requestPath = rhs;
-    save(Keys.request_path.name, _requestPath);
+  Future<void> setRequestPath(String? requestPath) async {
+    await save(Keys.request_path.name, requestPath);
+    _requestPath = requestPath;
   }
 
-  set getPath(String? rhs) {
-    _getPath = rhs;
-    save(Keys.get_path.name, _getPath);
+  Future<void> setGetPath(String? getPath) async {
+    await save(Keys.get_path.name, _getPath);
+    _getPath = getPath;
   }
 
-  /// Description: Attempts to initialize all the variable from memory.
+  /// Description: Attempts to fetch data that is outside the stack of this
+  ///   program. This data is necessary to run powershell and python HTTP
+  ///   scripts. Data is also displayed to the user in SettingsView.
+  ///   This data is necessary for the application to run. It sets the following
+  ///
+  /// - version - The currently installed version of Robo Talker Pro
+  /// - chromePath - path to the users chrome application. Necessary to run
+  ///   selenium web scraper (python package)
+  /// - mempoPath - path to python script. Implements selenium to memo accounts
+  /// - requestPath - path to python script. Implements a HTTP Request
+  /// - getPath - path to python script. Implements HTTP Get request
   Future<void> init() async {
-    version = await load(Keys.software_version.name);
-    chromePath = await load(Keys.chrome_path.name);
-    memoPath = await load(Keys.memo_path.name);
-    requestPath = await load(Keys.request_path.name);
-    getPath = await load(Keys.get_path.name);
+    // load data from memory
+    await version;
+    await chromePath;
+    await memoPath;
+    await requestPath;
+    await getPath;
   }
 
-  /// Desription: Returns a path to the chrome exe. It looks recursively
-  ///   starting at root. This path is needed for the memo.py script
+  /// Desription: Searches for a path to the chrome exe. It looks recursively
+  ///   starting in the Program Files directories (Windows) or the Applications
+  ///   (Mac). This path is needed for the memo.py script
   /// Returns:
   ///   Future<String?> - A path to the chrome executable. Null if not found.
   Future<String?> findChrome() async {
@@ -121,22 +116,13 @@ class SettingsServices {
       if (dir.existsSync()) {
         for (var file in dir.listSync(recursive: true, followLinks: false)) {
           if (file is File && file.path.endsWith(fileName!)) {
-            chromePath = file.path;
+            setChromePath(file.path);
             return file.path; // File found, return the path
           }
         }
       }
     }
-
     return version; // file not found
-  }
-
-  /// Description: Fetches software version from memory. Returns null if it's
-  ///   not found.
-  /// Return:
-  ///   [Future<String?>] - The version number as a string or null
-  Future<String?> fetchVersionFromMemory() async {
-    return await load(Keys.software_version.name);
   }
 
   /// Description: Fetches software version my GitHub repo. If found, save
@@ -171,7 +157,7 @@ class SettingsServices {
 
     // save the data
 
-    this.version = version;
+    await setVersion(version);
 
     return version;
   }
@@ -206,27 +192,20 @@ class SettingsServices {
       }
     } else if (File(tempDir.path).existsSync()) {
       File(tempDir.path).copySync(destinationDir);
-    } else {
-      print(
-          'The specified file or directory does not exist in the repository.');
     }
 
     // Clean up the temporary directory
     tempDir.deleteSync(recursive: true);
   }
 
-  Future<String?> fetchChromePath() async {
-    return await load(Keys.chrome_path.name);
+  /// Description: Custom Data Management class. Used to save user and program
+  ///   data. Current implementation saves data to disk.
+  Future<void> save(String key, dynamic data, {String? path}) async {
+    await saveData(key, data, path: path);
   }
 
-  Future<void> save(
-    String key,
-    dynamic data, {
-    String? path,
-  }) async {
-    saveData(key, data, path: path);
-  }
-
+  /// Description: Custom Data Management class. Used to load user and program
+  ///   data. Current implementation loads data to disk.
   Future<dynamic> load(String key, {String? path}) async {
     return await loadData(key);
   }

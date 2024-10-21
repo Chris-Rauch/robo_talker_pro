@@ -14,16 +14,19 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     //this event is called in SettingsBloc constructor
     on<FetchSettingsEvent>((event, emit) async {
       try {
-        // attempt to load variables from memory
-        await services.init();
-
-        // if fetch from memory was unsuccessful, fetch from GitHub
-        services.version ??= await services.fetchVersionFromGitHub();
-        services.chromePath ??= await services.findChrome();
+        // grab data
+        //await services.init();
 
         // SettingsServices getter functions attempt to pull info from memory
-        emit(ViewSettingsState(services.version, services.chromePath,
-            services.memoPath, services.requestPath, services.getPath));
+        emit(
+          ViewSettingsState(
+            await services.version,
+            await services.chromePath,
+            await services.memoPath,
+            await services.requestPath,
+            await services.getPath,
+          ),
+        );
       } catch (e) {
         // TODO must handle all error here. If e is thrown, then the UI is left at a loading state
         emit(ErrorState(e));
@@ -34,8 +37,15 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       (event, emit) async {
         try {
           await services.save(event.key.name, event.data, path: event.path);
-          emit(ViewSettingsState(services.version, services.chromePath,
-              services.memoPath, services.requestPath, services.getPath));
+          emit(
+            ViewSettingsState(
+              await services.version,
+              await services.chromePath,
+              await services.memoPath,
+              await services.requestPath,
+              await services.getPath,
+            ),
+          );
         } catch (e) {
           emit(ErrorState(e));
         }
@@ -45,37 +55,44 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<SelectFileEvent>(
       (event, emit) async {
         try {
+          // call the File Picker Widget
           String? val;
           FilePickerResult? result = await FilePicker.platform.pickFiles(
             allowMultiple: false,
             type: FileType.custom,
             allowedExtensions: ['py'],
           );
-
           if ((result != null) && (result.files.single.path != null)) {
             val = result.files.single.path;
           }
 
-          Keys key = event.key;
-
+          // the event will dictate which key to use
           switch (event.key) {
             case Keys.memo_path:
-              services.memoPath = val;
+              await services.setMemoPath(val);
               break;
             case Keys.chrome_path:
-              services.chromePath = val;
+              await services.setChromePath(val);
               break;
             case Keys.request_path:
-              services.requestPath = val;
+              await services.setRequestPath(val);
               break;
             case Keys.get_path:
-              services.getPath = val;
+              await services.setGetPath(val);
               break;
             default:
           }
 
-          emit(ViewSettingsState(services.version, services.chromePath,
-              services.memoPath, services.requestPath, services.getPath));
+          // emit the updated state
+          emit(
+            ViewSettingsState(
+              await services.version,
+              await services.chromePath,
+              await services.memoPath,
+              await services.requestPath,
+              await services.getPath,
+            ),
+          );
         } catch (e) {
           emit(ErrorState(e));
         }

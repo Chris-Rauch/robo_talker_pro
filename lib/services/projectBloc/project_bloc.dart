@@ -81,43 +81,28 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     /// All necessary information has been received. Make HTTP request
     on<PostJobEvent>((event, emit) async {
       emit(ProjectLoadingState());
-      String jobName = event.jobName;
-      DateTime startDate = event.startTime.add(const Duration(hours: 3));
+      RoboServices job = RoboServices();
       DateTime endDate = event.endTime.add(const Duration(hours: 3));
       int exitCode = -1;
       bool keepTrying = true;
       DateTime estimatedCompletion = endDate.subtract(const Duration(hours: 3));
 
       try {
-        String? username = await loadData(Keys.roboUsername.name);
-        String? zKey = await loadData(Keys.z_token.name);
-        String? callerId = await loadData(Keys.caller_id.name);
-        String? contactList =
-            await loadData(Keys.contactlist.name, path: PROJECT_DATA_PATH);
-        if (username == null) {
-          throw Exception('Username not provided. did you forget to save?');
-        } else if (zKey == null) {
-          throw Exception('Z Token not provided. did you forget to save?');
-        } else if (contactList == null) {
-          throw Exception('Couldn\'t find contact list');
-        }
+        //TODO job.checkForErrors
 
-        // post to RoboTalker website
-        RoboServices job = RoboServices(jobName, startDate, endDate, callerId,
-            LATE_PAYMENT_MESSAGE, jsonDecode(contactList), username, zKey);
-        String? body = jsonEncode(job.getBody(RequestType.multiJobPost));
-        await saveData(Keys.request_body.name, body, path: PROJECT_DATA_PATH);
-        exitCode = await job.post();
-        if (exitCode != 0) {
-          throw Exception('Could not post job to RoboTalker website');
-        }
+        // set the body. They python script needs this to make the post request
+        await job.setBody(RequestType.multiJobPost);
 
-        // wait for calls to finish and grab their info
-        //int testingInt = 0;
+        // post to RoboTalker website. Exceptions are thrown on errors
+        await job.multiJobPost();
+
+        // this loop is waiting for the calls to finish
         while (keepTrying) {
-          //print('keep trying loop: ${testingInt++}');
-          //print("Estimated completion: ${estimatedCompletion.toString()}");
+
+          // update the waiting screen
           emit(PollingResourceState(estimatedCompletion));
+
+          // attempt to grab data from .ashx file
           keepTrying = !(await job.getJobDetails());
           estimatedCompletion =
               estimatedCompletion.add(const Duration(minutes: 5));
@@ -139,15 +124,12 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         await for (final output in process.stdout) {
           String pipe = String.fromCharCodes(output);
           List<String> pipeSections = pipe.split('~');
-          print("Pipe: $pipe");
 
           if (pipeSections.length == 4) {
-            print("Pipe Sections ${pipeSections[0]}");
             double percent = double.parse(pipeSections[0]); // 1.0
             //double estimatedTime = double.parse(pipeSections[1]); // 10 (in minutes)
             //String success = pipeSections[2]; // success/failed
             //String row = pipeSections[3]; // ['Me', '7143290331', 'Answering Machine', '1', '9494709674', '8/26/2024 5:35:00 PM', '80', '8/26/2024 5:36:37 PM', '3021657', '', '', '8/26/2024 5:35:17 PM', '28', '1008603', 'My agency', '1763.46', 'Aug 12, 2024', 'M W F 1 0 1 3 1 4']
-            print("percent: $percent");
             emit(ProgressState(percent));
           }
         }
@@ -157,7 +139,6 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           emit(JobCompleteState());
         }
       } catch (e) {
-        print('Post Job Event Error: $e');
         emit(ProjectErrorState(e));
       }
     });

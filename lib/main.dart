@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:robo_talker_pro/services/projectBloc/project_bloc.dart';
 import 'package:robo_talker_pro/services/settingsBloc/settings_bloc.dart';
-import 'package:robo_talker_pro/views/main_view/main_view.dart';
+import 'package:robo_talker_pro/views/main_view.dart';
 
 void main() {
   runApp(

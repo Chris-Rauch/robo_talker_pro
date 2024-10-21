@@ -28,7 +28,7 @@ class ProjectViewState extends State<ProjectView> {
   DateTime _stopDate = DateTime(
       DateTime.now().year, DateTime.now().month, DateTime.now().day, 12, 30);
   Widget? currentWidget;
-  bool _isLoading = true;
+  //bool _isLoading = true;
 
 /*
   @override
@@ -65,8 +65,6 @@ class ProjectViewState extends State<ProjectView> {
             currentWidget = _progressBarUI(context, state.progress);
           } else if (state is JobCompleteState) {
             currentWidget = _finishedProjectUI(context);
-          } else if (state is ProjectErrorState) {
-            // 'skip' the rebuild process to show error to user
           } else {
             // when ProjectView is opened for the first time
             currentWidget = _chooseProjectUI(context);
