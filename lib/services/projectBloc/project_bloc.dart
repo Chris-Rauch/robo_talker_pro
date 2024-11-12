@@ -1,10 +1,11 @@
-import 'dart:convert';
 import 'dart:io';
+import 'package:provider/provider.dart';
 import 'package:robo_talker_pro/auxillary/constants.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 import 'package:robo_talker_pro/services/file_services.dart';
 import 'package:robo_talker_pro/services/robo_services.dart';
+import 'package:robo_talker_pro/services/settings_services.dart';
 import 'project_event.dart';
 import 'project_state.dart';
 import 'package:bloc/bloc.dart';
@@ -61,9 +62,9 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
 
         // save contacts, groupName and project type
         String jobName = fileServices.getGroupName();
-        String key = Keys.contactlist.toLocalizedString();
+        String key = Keys.contactlist.name;
         await saveData(key, contacts, path: PROJECT_DATA_PATH);
-        key = Keys.groupName.toLocalizedString();
+        key = Keys.groupname.name;
         await saveData(key, jobName, path: PROJECT_DATA_PATH);
         key = Keys.projectType.toLocalizedString();
         await saveData(key, projectTypeAsString, path: PROJECT_DATA_PATH);
@@ -82,42 +83,42 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     on<PostJobEvent>((event, emit) async {
       emit(ProjectLoadingState());
       RoboServices job = RoboServices();
-      DateTime endDate = event.endTime.add(const Duration(hours: 3));
+      SettingsServices settings = SettingsServices();
+      DateTime timeFinished = event.endTime;
       int exitCode = -1;
-      bool keepTrying = true;
-      DateTime estimatedCompletion = endDate.subtract(const Duration(hours: 3));
 
       try {
-        //TODO job.checkForErrors
-
-        // set the body. They python script needs this to make the post request
-        await job.setBody(RequestType.multiJobPost);
+        // initilaize data from save file into job object. Acts as constructor
+        if (await job.init(event.jobName, event.startTime, event.endTime)) {}
 
         // post to RoboTalker website. Exceptions are thrown on errors
         await job.multiJobPost();
 
-        // this loop is waiting for the calls to finish
-        while (keepTrying) {
-
-          // update the waiting screen
-          emit(PollingResourceState(estimatedCompletion));
-
-          // attempt to grab data from .ashx file
-          keepTrying = !(await job.getJobDetails());
-          estimatedCompletion =
-              estimatedCompletion.add(const Duration(minutes: 5));
-        }
+        // display to the user the estimated completion time
+        // check to see if the job finished, incrementing by 5 minutes after
+        // every failed attempt
+        do {
+          print("Time finshed: ${timeFinished.toString()}");
+          emit(PollingResourceState(timeFinished));
+          timeFinished = timeFinished.add(const Duration(minutes: 5));
+        } while (!(await job.getJobDetails()));
 
         // start memo'ing accounts
-        String memoPath = await loadData(Keys.memo_path.name);
+        PROJECT_DATA_PATH;
+        String pythonFile = await loadData(Keys.memo_path.name);
+        String userName = await loadData(Keys.teUsername.toLocalizedString());
+        String pWord = await loadData(Keys.tePassword.toLocalizedString());
+        String chromeExe = await loadData(Keys.chrome_path.toLocalizedString());
+        const String memoMessage =
+            "RoboCall went out. Left a message,RoboCall went out. Insured answered,RoboCall attempted. Insured did not answer and didn't leave a message,RoboCall attempted. Invalid phone number";
         Process process = await Process.start('python', [
-          memoPath,
+          pythonFile,
           PROJECT_DATA_PATH!,
           'head',
-          await loadData(Keys.teUsername.toLocalizedString()),
-          await loadData(Keys.tePassword.toLocalizedString()),
-          MEMO_BODY,
-          await loadData(Keys.chrome_path.toLocalizedString())
+          userName,
+          pWord,
+          memoMessage,
+          chromeExe
         ]);
 
         // handle stdout
@@ -135,10 +136,14 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         }
 
         exitCode = await process.exitCode;
+        print("exit code: $exitCode");
         if (exitCode == 0) {
           emit(JobCompleteState());
+        } else {
+          throw Exception('Python memo.py failed.');
         }
       } catch (e) {
+        print("Error in project_bloc.dart: ${e.toString()}");
         emit(ProjectErrorState(e));
       }
     });

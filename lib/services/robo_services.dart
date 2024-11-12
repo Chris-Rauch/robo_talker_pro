@@ -10,6 +10,7 @@ library robo_services;
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart';
 import 'package:robo_talker_pro/auxillary/constants.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
@@ -31,6 +32,9 @@ class RoboServices {
       _extraReportEmail = 'rauch.christopher13@gmail.com';
   String? _jobName, _optCallerId, _messageText;
   List<dynamic>? _contactList;
+
+  /// when interacting with the user, display as PST.
+  /// when interacting with the server, use EST
   DateTime? _runDateTime, _endDateTime;
 
   // ashx request params
@@ -56,9 +60,10 @@ class RoboServices {
     return _zKey;
   }
 
-  String? get auth {
-    if (_userName != null && _zKey != null) {
-      _auth = 'Basic ${base64Encode(utf8.encode('$_userName:$_zKey'))}';
+  Future<String?> get auth async {
+    if ((await userName) != null && (await zKey != null)) {
+      _auth =
+          'Basic ${base64Encode(utf8.encode('${await userName}:${await zKey}'))}';
     } else {
       _auth = null;
     }
@@ -70,7 +75,7 @@ class RoboServices {
   }
 
   Future<String?> get jobName async {
-    _jobName ??= await load(Keys.jobName.name, path: PROJECT_DATA_PATH);
+    _jobName ??= await load(Keys.groupname.name, path: PROJECT_DATA_PATH);
     return _jobName;
   }
 
@@ -85,20 +90,23 @@ class RoboServices {
   }
 
   Future<List<dynamic>?> get contactList async {
-    _contactList ??= await load(Keys.contactlist.name, path: PROJECT_DATA_PATH);
+    _contactList ??=
+        jsonDecode(await load(Keys.contactlist.name, path: PROJECT_DATA_PATH));
     return _contactList;
   }
 
   Future<DateTime?> get runDateTime async {
-    _runDateTime ??= await load(Keys.runDateTime.name, path: PROJECT_DATA_PATH);
-    _runDateTime?.subtract(const Duration(hours: 3));
-    return _runDateTime;
+    String dateAsString =
+        await load(Keys.rundatetime.name, path: PROJECT_DATA_PATH) ?? '';
+    _runDateTime ??= DateTime.tryParse(dateAsString);
+    return _runDateTime; //!.subtract(const Duration(hours: 3)); // convert to PST
   }
 
   Future<DateTime?> get endDateTime async {
-    _endDateTime ??= await load(Keys.endDateTime.name, path: PROJECT_DATA_PATH);
-    _endDateTime?.subtract(const Duration(hours: 3));
-    return _endDateTime;
+    String dateAsString =
+        await load(Keys.enddatetime.name, path: PROJECT_DATA_PATH) ?? '';
+    _endDateTime ??= DateTime.tryParse(dateAsString);
+    return _endDateTime; //!.subtract(const Duration(hours: 3)); // convert to PST
   }
 
   Future<String?> get jobID async {
@@ -106,21 +114,51 @@ class RoboServices {
     return _jobId;
   }
 
+  Future<String?> get body async {
+    _body ??= await load(Keys.request_body.name, path: PROJECT_DATA_PATH);
+    return _body;
+  }
+
+  String get messageId {
+    return _messageId;
+  }
+
+  String get customerName {
+    return _customerName;
+  }
+
+  String get reportEmail {
+    return _extraReportEmail;
+  }
+
   // setters
   Future<void> setJobName(String? jobName) async {
-    await save(Keys.jobName.name, jobName, path: PROJECT_DATA_PATH);
+    await save(Keys.groupname.name, jobName, path: PROJECT_DATA_PATH);
+    // whenever the job name is changed, contact list group name needs be changed
+    List<dynamic>? contacts = await contactList;
+    for (int i = 0; i < contacts!.length; ++i) {
+      contacts[i]['groupname'] = jobName;
+    }
+    setContactList(contacts);
     _jobName = jobName;
   }
 
-  Future<void> setRunDateTime(DateTime? dateTime) async {
-    dateTime = dateTime!.subtract(const Duration(hours: 3));
-    await save(Keys.runDateTime.name, dateTime, path: PROJECT_DATA_PATH);
+  Future<void> setContactList(List<dynamic>? contactList) async {
+    await save(Keys.contactlist.name, contactList);
+    _contactList = contactList;
+  }
+
+  Future<void> setRunDateTime(DateTime dateTime) async {
+    //dateTime = dateTime!.add(const Duration(hours: 3)); // convert to EST
+    await save(Keys.rundatetime.name, dateTime.toIso8601String(),
+        path: PROJECT_DATA_PATH);
     _runDateTime = dateTime;
   }
 
-  Future<void> setEndDateTime(DateTime? dateTime) async {
-    dateTime = dateTime!.subtract(const Duration(hours: 3));
-    await save(Keys.endDateTime.name, dateTime, path: PROJECT_DATA_PATH);
+  Future<void> setEndDateTime(DateTime dateTime) async {
+    //dateTime = dateTime!.add(const Duration(hours: 3)); // convert to EST
+    await save(Keys.enddatetime.name, dateTime.toIso8601String(),
+        path: PROJECT_DATA_PATH);
     _endDateTime = dateTime;
   }
 
@@ -130,7 +168,7 @@ class RoboServices {
   }
 
   Future<void> setBody(RequestType request) async {
-    String? body = jsonEncode(getBody(request));
+    String? body = jsonEncode(await initBody(request));
     await save(Keys.request_body.name, body, path: PROJECT_DATA_PATH);
     _body = body;
   }
@@ -138,35 +176,40 @@ class RoboServices {
   /// Description: Attempts to fetch data data that is saved outside of the
   ///   program. This data is necessary to make HTTP requests to the robotalker
   ///   website (robotalker.com)
-  Future<void> init() async {
-    await jobName;
-    await runDateTime;
-    await endDateTime;
-    await callerID;
-    message;
-    await contactList;
-    await userName;
-    await zKey;
-    auth;
+  Future<bool> init(String job, DateTime start, DateTime end) async {
+    await setJobName(job);
+    await setRunDateTime(start);
+    await setEndDateTime(end);
+
+    //TODO check for valid inputs
+    // time selected by user can't be before time now.. getting weird behavior
+
+    // set the body. They python script needs this to make the post request
+    await setBody(RequestType.multiJobPost);
+
+    return true;
   }
 
   /// Returns the HTTP body based on the request type
-  Map<String, dynamic> getBody(RequestType requestType) {
+  Future<Map<String, dynamic>> initBody(RequestType requestType) async {
+    print("init body started");
     Map<String, dynamic> body;
     switch (requestType) {
       case RequestType.multiJobPost:
         body = {
           'whattodo': _whatToDo,
-          'jobname': _jobName,
-          'optcallerid': _optCallerId ?? '',
-          'messageid': _messageId,
-          'messagetext': _messageText ?? '',
-          'customername': _customerName,
-          'extrareportemail': _extraReportEmail,
-          'phonelistgroupname': _jobName,
-          'contactlist': _contactList,
-          'rundatetime': _runDateTime.toString(),
-          'enddatetime': _endDateTime.toString()
+          'jobname': await jobName,
+          'optcallerid': await callerID,
+          'messageid': messageId,
+          'messagetext': message,
+          'customername': customerName,
+          'extrareportemail': reportEmail,
+          'phonelistgroupname': await jobName,
+          'contactlist': await contactList,
+          'rundatetime': ((await runDateTime)!.add(const Duration(hours: 3)))
+              .toIso8601String(),
+          'enddatetime': ((await endDateTime)!.add(const Duration(hours: 3)))
+              .toIso8601String(),
         };
         break;
       case RequestType.jobDetails:
@@ -175,16 +218,17 @@ class RoboServices {
       default:
         throw Exception('Unknown request');
     }
+    print("init body ended");
     return body;
   }
 
   /// Return the HTTP header. Checks to see if cookie exists
-  Map<String, String> getHeader() {
+  Future<Map<String, String>> getHeader() async {
     Map<String, String> header = {};
     header['Content-Type'] = _contentType;
     if (_cookie != null) {
       header['Cookie'] = _cookie!;
-    } else if (_auth != null) {
+    } else if ((await auth) != null) {
       header['Authorization'] = _auth!;
     }
     return header;
@@ -234,7 +278,7 @@ class RoboServices {
       requestPath,
       'POST',
       getUrl(RequestType.multiJobPost).toString(),
-      jsonEncode(getHeader()),
+      jsonEncode(await getHeader()),
       PROJECT_DATA_PATH!
     ]);
 
@@ -267,7 +311,6 @@ class RoboServices {
       //responseJson['callId'];
       setJobID(jobId);
     });
-
     // Handle stderr
     stderrStream.listen((data) {});
 
@@ -285,24 +328,33 @@ class RoboServices {
   /// Returns:
   ///   [bool] true if the job details were successfully fetched,
   ///   otherwise `false`.
+  /// Throws:
+  /// - PathException("Can not find 'get.py' file")
   Future<bool> getJobDetails() async {
+    SettingsServices settings = SettingsServices();
+    String? getPath = await settings.getPath; // path to python 'get' script
     DateTime now = DateTime.now();
     Duration timeToWait = (await endDateTime)!.difference(now);
     bool success = false;
+
+    // check input
+    if (getPath == null) {
+      throw PathException("Can not find 'get.py' file");
+    }
 
     // if difference is negative, the job should be over
     if (timeToWait.isNegative) {
       timeToWait = const Duration(minutes: 5);
     }
+
     // Wait the specified amount of time and then try and grab job details
     await Future.delayed(timeToWait, () async {
-      String getPath = await loadData(Keys.get_path.name);
       Process process = await Process.start('python', [
         getPath,
         'GET',
         getUrl(RequestType.jobDetails).toString(),
-        jsonEncode(getHeader()),
-        jsonEncode(getBody(RequestType.jobDetails))
+        jsonEncode(await getHeader()),
+        jsonEncode(await initBody(RequestType.jobDetails))
       ]);
       // Stream stdout and stderr
       final stdoutStream =
@@ -311,11 +363,11 @@ class RoboServices {
           process.stderr.transform(utf8.decoder).asBroadcastStream();
 
       // Handle stdout
-      String statusCode = 'Status code: ';
-      String response = 'Response: ';
       stdoutStream.listen((data) async {
+        String statusCode = 'Status code: ';
+        String response = 'Response: ';
         int startIndex;
-        //print('stdout: $data');
+
         if (data.contains(statusCode)) {
           startIndex = data.indexOf(statusCode);
           startIndex += statusCode.length;
@@ -335,11 +387,10 @@ class RoboServices {
         if (!response.contains('No record found.')) {
           //print('Response: $response');
           success = true;
-          String contactList = await loadData(
-              Keys.contactlist.toLocalizedString(),
-              path: PROJECT_DATA_PATH);
+          String contactList =
+              await load(Keys.contactlist.name, path: PROJECT_DATA_PATH);
           String detailedReport = _getVars(response, contactList);
-          await saveData(Keys.callData.toLocalizedString(), detailedReport,
+          await save(Keys.callData.toLocalizedString(), detailedReport,
               path: PROJECT_DATA_PATH);
         } else {
           success = false;
@@ -350,6 +401,7 @@ class RoboServices {
       stderrStream.listen((data) {
         throw Exception(data);
       });
+
       await process.exitCode;
     });
     return success;
@@ -409,9 +461,9 @@ class RoboServices {
   /// }
   Future<Map<String, String>?> multiJob() async {
     // prep the data
-    var header = getHeader();
-    var body = getBody(RequestType.multiJobPost);
-    var url = getUrl(RequestType.multiJobPost);
+    Map<String, String> header = await getHeader();
+    Map<String, dynamic> body = await initBody(RequestType.multiJobPost);
+    Uri url = getUrl(RequestType.multiJobPost);
 
     // POST MultiJob
     var request = http.Request('POST', url);
@@ -438,102 +490,6 @@ class RoboServices {
   /// Description: Custom Data Management class. Used to load user and program
   ///   data. Current implementation loads data to disk.
   Future<dynamic> load(String key, {String? path}) async {
-    return await loadData(key);
+    return await loadData(key, path: path);
   }
 }
-
-/*
-var headers = {
-  'Content-Type': 'application/json',
-  'Authorization': '••••••',
-  
-};
-var data = json.encode({
-  "whattodo": "SendTtsMessage",
-  "jobname": "LP 05/20/2024 to 05/24/2024",
-  "optcallerid": "9494709674",
-  "messageid": "0",
-  "messagetext": "Hi, this message is from General Agents and is for #name#. We’re calling in regards to your contract, #var4#. This is just a courtesy reminder that your payment of, $#var2#, was due on, #var3#, for your insurance policy with, #var1#. You can make payments online at mygaac.com. If you've already made a payment please disregard this message. Thankyou.",
-  "customername": "Chris Rauch",
-  "extrareportemail": "rauch.christopher13@gmail.com",
-  "phonelistgroupname": "LP 05/20/2024 to 05/24/2024",
-  "contactlist": [
-    {
-      "name": "S TOWN TRANSPORTATION INC",
-      "phone": "(209) 513-7883",
-      "var1": "MALWA FINANCIAL AND INSURANCE ",
-      "var2": "2542.02",
-      "var3": "May 20",
-      "var4": "M W F 1 3 7 7 7 0",
-      "groupname": "LP 05/20/2024 to 05/24/2024"
-    },
-    {
-      "name": "Harmanpreet Transport Inc",
-      "phone": "(559) 803-5062",
-      "var1": "MALWA FINANCIAL AND INSURANCE ",
-      "var2": "1267.53",
-      "var3": "May 20",
-      "var4": "M W F 1 4 2 0 0 7",
-      "groupname": "LP 05/20/2024 to 05/24/2024"
-    }
-  ],
-  "rundatetime": "2024/05/29 15:15:00"
-});
-var dio = Dio();
-var response = await dio.request(
-  'https://robotalker.com/REST/api/MultiJob',
-  options: Options(
-    method: 'POST',
-    headers: headers,
-  ),
-  data: data,
-);
-
-if (response.statusCode == 200) {
-  print(json.encode(response.data));
-}
-else {
-  print(response.statusMessage);
-}
-*/
-
-/*
-{
-    "whattodo": "SendTtsMessage",
-    "jobname": "LP 05/20/2024 to 05/24/2024",
-    "optcallerid": "9494709674",
-    "messageid": "0",
-    "messagetext": "Hi, this message is from General Agents and is for #name#. We’re calling in regards to your contract, #var4#. This is just a courtesy reminder that your payment of, $#var2#, was due on, #var3#, for your insurance policy with, #var1#. You can make payments online at mygaac.com. If you've already made a payment please disregard this message. Thankyou.",
-    "customername": "Chris Rauch",
-    //"messageidvm": "Robo Late Payment 1",
-    //"imageurl": "",
-    "extrareportemail": "rauch.christopher13@gmail.com",
-    //"transfernumber": "",
-    //"txtreportnumber": "",
-    "phonelistgroupname": "LP 05/20/2024 to 05/24/2024",
-    "contactlist": [
-        {
-            "name": "S TOWN TRANSPORTATION INC",
-            "phone": "(209) 513-7883",
-            "var1": "MALWA FINANCIAL AND INSURANCE ",
-            "var2": "2542.02",
-            "var3": "May 20",
-            "var4": "M W F 1 3 7 7 7 0",
-            "groupname": "LP 05/20/2024 to 05/24/2024"
-        },
-        {
-            "name": "Harmanpreet Transport Inc",
-            "phone": "(559) 803-5062",
-            "var1": "MALWA FINANCIAL AND INSURANCE ",
-            "var2": "1267.53",
-            "var3": "May 20",
-            "var4": "M W F 1 4 2 0 0 7",
-            "groupname": "LP 05/20/2024 to 05/24/2024"
-        }
-        
-    ],
-    "rundatetime": "2024/05/29 15:15:00"
-    //"enddatetime": "",
-    //"calloptions": ""
-}
-*/

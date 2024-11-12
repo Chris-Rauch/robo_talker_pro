@@ -10,9 +10,9 @@ enum Keys {
   roboUsername,
   z_token,
   contactlist,
-  groupName,
-  runDateTime,
-  endDateTime,
+  groupname,
+  rundatetime,
+  enddatetime,
   caller_id,
   teUsername,
   tePassword,
@@ -22,7 +22,6 @@ enum Keys {
   projectType,
   jobID,
   userID,
-  jobName,
   callData,
   chrome_path,
   request_body,
@@ -35,20 +34,6 @@ enum Keys {
 extension KeyExtension on Keys {
   String toLocalizedString() {
     switch (this) {
-      case Keys.roboUsername:
-        return 'roboUsername';
-      case Keys.z_token:
-        return 'z_token';
-      case Keys.contactlist:
-        return 'contactlist';
-      case Keys.groupName:
-        return 'groupname';
-      case Keys.runDateTime:
-        return 'rundatetime';
-      case Keys.endDateTime:
-        return 'enddatetime';
-      case Keys.caller_id:
-        return 'caller_id';
       case Keys.teUsername:
         return 'Third Eye Username';
       case Keys.tePassword:

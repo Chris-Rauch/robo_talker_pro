@@ -1,11 +1,6 @@
-//import 'dart:convert';
 import 'dart:io';
-//import 'package:archive/archive.dart';
-//import 'package:http/http.dart' as http;
-import 'package:http/http.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
-import 'package:robo_talker_pro/services/settingsBloc/settings_bloc.dart';
 
 class SettingsServices {
   String? _version;

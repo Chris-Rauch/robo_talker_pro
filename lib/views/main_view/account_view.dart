@@ -21,13 +21,13 @@ class AccountViewState extends State<AccountView> {
   @override
   void initState() {
     super.initState();
-    loadData(Keys.roboUsername.toLocalizedString()).then((value) {
+    loadData(Keys.roboUsername.name).then((value) {
       _roboUsernameController.text = value ?? '';
     });
-    loadData(Keys.z_token.toLocalizedString()).then((value) {
+    loadData(Keys.z_token.name).then((value) {
       _roboKeyController.text = value ?? '';
     });
-    loadData(Keys.caller_id.toLocalizedString()).then((value) {
+    loadData(Keys.caller_id.name).then((value) {
       _callerIdController.text = value ?? '';
     });
     loadData(Keys.teUsername.toLocalizedString()).then((value) {
@@ -42,10 +42,9 @@ class AccountViewState extends State<AccountView> {
   }
 
   _save() {
-    saveData(
-        Keys.roboUsername.toLocalizedString(), _roboUsernameController.text);
-    saveData(Keys.z_token.toLocalizedString(), _roboKeyController.text);
-    saveData(Keys.caller_id.toLocalizedString(), _callerIdController.text);
+    saveData(Keys.roboUsername.name, _roboUsernameController.text);
+    saveData(Keys.z_token.name, _roboKeyController.text);
+    saveData(Keys.caller_id.name, _callerIdController.text);
     saveData(Keys.teUsername.toLocalizedString(), _teUsernameController.text);
     saveData(Keys.tePassword.toLocalizedString(), _tePwordController.text);
     saveData(Keys.userID.toLocalizedString(), _userIdController.text);

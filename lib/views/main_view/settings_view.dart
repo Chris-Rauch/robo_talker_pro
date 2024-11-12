@@ -1,10 +1,6 @@
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:path/path.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
-import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 import 'package:robo_talker_pro/services/settingsBloc/settings_bloc.dart';
 import 'package:robo_talker_pro/services/settingsBloc/settings_event.dart';
 import 'package:robo_talker_pro/services/settingsBloc/settings_state.dart';

@@ -79,7 +79,7 @@ Future<dynamic> loadData(String key, {String? path}) async {
       return savedData[key];
     }
   } catch (e) {
-    print(e);
+    log('Could not load user preferences', error: e);
   }
   return null;
 }

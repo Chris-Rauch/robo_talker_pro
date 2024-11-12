@@ -130,7 +130,7 @@ class ThirdEye:
             print("Unknown Error")
             return False
         else:
-            save_memo.click()
+            #save_memo.click()
             #print("Save succussful")
             return True
         

@@ -76,7 +76,7 @@ class FileServices {
     String? header;
 
     //save job name to project data file
-    await saveData(Keys.groupName.name, groupname, path: PROJECT_DATA_PATH);
+    await saveData(Keys.groupname.name, groupname, path: PROJECT_DATA_PATH);
 
     //get all the exception cases. In this order
     List<List<Data?>> noCallAgreement = getNoCall(sheet);
@@ -474,7 +474,6 @@ class FileServices {
 
       return false;
     } catch (e) {
-      print('$e in function _areSimilar');
       return false;
     }
   }
