@@ -192,7 +192,6 @@ class RoboServices {
 
   /// Returns the HTTP body based on the request type
   Future<Map<String, dynamic>> initBody(RequestType requestType) async {
-    print("init body started");
     Map<String, dynamic> body;
     switch (requestType) {
       case RequestType.multiJobPost:
@@ -218,7 +217,6 @@ class RoboServices {
       default:
         throw Exception('Unknown request');
     }
-    print("init body ended");
     return body;
   }
 
