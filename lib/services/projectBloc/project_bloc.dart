@@ -83,26 +83,32 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     on<PostJobEvent>((event, emit) async {
       emit(ProjectLoadingState());
       RoboServices job = RoboServices();
+      // TODO use settings class to initialize python process rather than all
+      // those laodData calls
       SettingsServices settings = SettingsServices();
       DateTime timeFinished = event.endTime;
       int exitCode = -1;
 
       try {
+        // TODO when would init return false?
         // initilaize data from save file into job object. Acts as constructor
         if (await job.init(event.jobName, event.startTime, event.endTime)) {}
 
         // post to RoboTalker website. Exceptions are thrown on errors
         await job.multiJobPost();
 
+        // pad end time by 5 min for debugging
+
+
         // display to the user the estimated completion time
-        // check to see if the job finished, incrementing by 5 minutes after
-        // every failed attempt
+        // poll the resource to check for completion
+        // incrementing by 5 min until completion
         do {
-          print("Time finshed: ${timeFinished.toString()}");
           emit(PollingResourceState(timeFinished));
           timeFinished = timeFinished.add(const Duration(minutes: 5));
         } while (!(await job.getJobDetails()));
 
+        // TODO wrap this in robo services or create new TE library
         // start memo'ing accounts
         PROJECT_DATA_PATH;
         String pythonFile = await loadData(Keys.memo_path.name);
@@ -132,18 +138,18 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
             //String success = pipeSections[2]; // success/failed
             //String row = pipeSections[3]; // ['Me', '7143290331', 'Answering Machine', '1', '9494709674', '8/26/2024 5:35:00 PM', '80', '8/26/2024 5:36:37 PM', '3021657', '', '', '8/26/2024 5:35:17 PM', '28', '1008603', 'My agency', '1763.46', 'Aug 12, 2024', 'M W F 1 0 1 3 1 4']
             emit(ProgressState(percent));
+          } else {
+            print(pipe);
           }
         }
 
         exitCode = await process.exitCode;
-        print("exit code: $exitCode");
         if (exitCode == 0) {
           emit(JobCompleteState());
         } else {
           throw Exception('Python memo.py failed.');
         }
       } catch (e) {
-        print("Error in project_bloc.dart: ${e.toString()}");
         emit(ProjectErrorState(e));
       }
     });
