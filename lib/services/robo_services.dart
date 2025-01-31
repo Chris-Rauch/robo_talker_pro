@@ -408,7 +408,7 @@ class RoboServices {
   /// HTTP request 'GetJobDetails.ashx?' does not return the vars. This function
   /// is designed to append the vars to each entry in contactList.
   String _getVars(String detailedReport, String contactList) {
-    List<dynamic> report = jsonDecode(detailedReport);
+    List<dynamic> report = jsonDecode(detailedReport); // TODO: ERROR -> Format exception // detaieldReport = "Response: "
     List<dynamic> contacts = jsonDecode(contactList);
     Map<String, Map<String, dynamic>> map = {
       for (var item in contacts) item['name']!: item

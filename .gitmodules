@@ -1,0 +1,3 @@
+[submodule "lib/submods/collection_calls"]
+	path = lib/submods/collection_calls
+	url = https://github.com/Chris-Rauch/collection_calls.git

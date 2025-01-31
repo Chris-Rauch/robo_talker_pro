@@ -41,7 +41,6 @@ if __name__ == "__main__":
     url = sys.argv[2]
 
     # get the headers from the arg list. Check formatting (expected JSON) 
-    #sys.argv[3] = '{"Content-Type":\"application/json\",\"Authorization\":\"Basic Y2hyaXNAbXlnYWFjLmNvbToyMzA4M0JCOEMzNEEyMkFFQzU5QjA0Q0YyQjI1MEM2Qg==\",\"Cookie\":\"Cookie_1=value\"}'# REMOVE
     headers = None
     if(len(sys.argv) >= 4):
       try:

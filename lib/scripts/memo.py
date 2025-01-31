@@ -14,7 +14,7 @@ from selenium.common.exceptions import TimeoutException
 #from third_eye_nav import ThirdEye
 
 
-error_wait_time = 10
+error_wait_time = 15
 
 class ThirdEye:
     def __init__(self,headless,chromedriver_path):
