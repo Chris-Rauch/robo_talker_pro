@@ -9,6 +9,7 @@ import 'package:robo_talker_pro/services/projectBloc/project_bloc.dart';
 import 'package:robo_talker_pro/services/projectBloc/project_event.dart';
 import 'package:robo_talker_pro/services/projectBloc/project_state.dart';
 import 'package:path/path.dart' as p;
+import 'package:robo_talker_pro/views/widgets/button.dart';
 
 class ProjectView extends StatefulWidget {
   const ProjectView({super.key});
@@ -86,25 +87,21 @@ class ProjectViewState extends State<ProjectView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ElevatedButton(
-              child: const Text('Late Payment'),
-              onPressed: () {
-                _goNext(context,
-                    const ProjectSelectedEvent(ProjectType.latePayment));
-                _projectType = ProjectType.latePayment;
-              },
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              child: const Text('Return Mail'),
-              onPressed:() {
-                /*
-                _goNext(context,
-                    const ProjectSelectedEvent(ProjectType.returnMail));
-                _projectType = ProjectType.returnMail;
-                */
-              },
-            ),
+            buildButton(
+                text: 'Late Payment',
+                onPressed: () => {},
+                height: 50,
+                color: const Color(0xFF003366)),
+            buildButton(
+                text: 'Return Mail',
+                onPressed: () => {/*do nothing for now*/},
+                height: 50.0,
+                color: Colors.grey),
+            buildButton(
+                text: 'Collection Calls',
+                onPressed: () => {/*do nothing for now*/},
+                height: 50.0,
+                color: const Color(0xFF003366)),
           ],
         ),
       ),
