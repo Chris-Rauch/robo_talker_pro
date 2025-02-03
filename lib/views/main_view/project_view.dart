@@ -10,6 +10,7 @@ import 'package:robo_talker_pro/services/projectBloc/project_event.dart';
 import 'package:robo_talker_pro/services/projectBloc/project_state.dart';
 import 'package:path/path.dart' as p;
 import 'package:robo_talker_pro/views/widgets/button.dart';
+import 'package:robo_talker_pro/views/widgets/dialog.dart';
 
 class ProjectView extends StatefulWidget {
   const ProjectView({super.key});
@@ -99,7 +100,11 @@ class ProjectViewState extends State<ProjectView> {
                 color: Colors.grey),
             buildButton(
                 text: 'Collection Calls',
-                onPressed: () => {/*do nothing for now*/},
+                onPressed: () async => {
+                  if(await buildConfirmationDialog(context)) {
+                    print('True')
+                  }
+                },
                 height: 50.0,
                 color: const Color(0xFF003366)),
           ],
@@ -383,4 +388,6 @@ class ProjectViewState extends State<ProjectView> {
     return '${dateTime.toLocal()}'
         .split(' ')[0]; // Adjust this formatting as needed
   }
+
+  
 }
