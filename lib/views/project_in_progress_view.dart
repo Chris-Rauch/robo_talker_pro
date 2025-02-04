@@ -3,8 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 class ProgressView extends StatefulWidget {
-  const ProgressView({super.key});
-
+  const ProgressView(this.step1InProgress, this.step2InProgress,
+      this.step3InProgress, this.jobCompleted,
+      {super.key});
+  final bool step3InProgress;
+  final bool step2InProgress;
+  final bool step1InProgress;
+  final bool jobCompleted;
   @override
   _ProgressViewState createState() => _ProgressViewState();
 }
@@ -14,12 +19,6 @@ class _ProgressViewState extends State<ProgressView>
   late AnimationController _controller;
   late Process _pythonScript;
   int _currentDot = 0;
-  bool _firstStepInProgress = false;
-  bool _secondStepInProgress = false;
-  bool _thirdStepInProgress = false;
-  bool _firstStepCompleted = false;
-  bool _secondStepCompleted = false;
-  bool _thirdStepCompleted = false;
 
   @override
   void initState() {
@@ -61,13 +60,13 @@ class _ProgressViewState extends State<ProgressView>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _buildLoadingColumn('Grabbing Collections Report',
-                _firstStepInProgress, _firstStepCompleted),
+                widget.step1InProgress, widget.step2InProgress),
             const SizedBox(width: 150),
             _buildLoadingColumn('Scheduling with RoboTalker',
-                _secondStepInProgress, _secondStepCompleted),
+                widget.step2InProgress, widget.step3InProgress),
             const SizedBox(width: 150),
-            _buildLoadingColumn('Memo\'ing Accounts', _thirdStepInProgress,
-                _thirdStepCompleted),
+            _buildLoadingColumn('Memo\'ing Accounts', widget.step3InProgress,
+                widget.jobCompleted),
           ],
         ),
       ),
@@ -122,26 +121,12 @@ class _ProgressViewState extends State<ProgressView>
     _pythonScript.stdout.transform(utf8.decoder).listen((data) {
       print('Hello there! Here\'s the data: $data');
       if (data.contains('Grabbing Collections Report')) {
-        _firstStepInProgress = true;
-        _secondStepInProgress = false;
-        _thirdStepInProgress = false;
       } else if (data.contains('Scheduling job with RoboTalker')) {
-        _firstStepInProgress = false;
-        _secondStepInProgress = true;
-        _thirdStepInProgress = false;
-      } else if (data.contains('Memo\'ing accounts')) {
-        _firstStepInProgress = false;
-        _secondStepInProgress = false;
-        _thirdStepInProgress = true;
-      }
+      } else if (data.contains('Memo\'ing accounts')) {}
 
       if (data.contains(" Completed")) {
-        _firstStepCompleted = true;
       } else if (data.contains("Step 2 Completed")) {
-        _secondStepCompleted = true;
-      } else if (data.contains("Step 3 Completed")) {
-        _thirdStepCompleted = true;
-      }
+      } else if (data.contains("Step 3 Completed")) {}
 
       setState(() {});
     });

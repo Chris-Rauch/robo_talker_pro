@@ -27,12 +27,18 @@ class FilePathSelectedEvent extends ProjectEvent {
 }
 
 // Emmited after user provides job information
-class PostJobEvent extends ProjectEvent {
-  final String jobName;
+class StartProjectEvent extends ProjectEvent {
+  final ProjectType type;
+  final String filePath;
+  final String folderPath;
   final DateTime startTime;
   final DateTime endTime;
-  PostJobEvent(
-      {required this.jobName, required this.startTime, required this.endTime});
+  StartProjectEvent(
+      {required this.type,
+      required this.filePath,
+      required this.folderPath,
+      required this.startTime,
+      required this.endTime});
 }
 
 class LoadingEvent extends ProjectEvent {}

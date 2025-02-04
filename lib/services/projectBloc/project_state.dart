@@ -9,42 +9,33 @@
 /// as well as to handle potential errors during these operations.
 library project_state_bloc;
 
+import 'package:robo_talker_pro/auxillary/enums.dart';
+
 //import 'package:robo_talker_pro/auxillary/enums.dart';
 
 abstract class ProjectState {}
 
-class ProjectInitialState extends ProjectState {}
+class SelectProjectState extends ProjectState {}
 
-class ChooseProjectState extends ProjectState {}
-
-class ChooseFilePathsState extends ProjectState {}
-
-class ChooseCallInfoState extends ProjectState {
-  String jobName;
-  ChooseCallInfoState(this.jobName);
+class SelectProjectDataState extends ProjectState {
+  ProjectType type;
+  SelectProjectDataState(this.type);
 }
 
-class ProjectLoadingState extends ProjectState {}
-
-/// This is the state when the program is waiting for Robo Talker to finish
-/// call. It will be polling a .ashx resource
-class PollingResourceState extends ProjectState {
-  DateTime estimatedCompletionTime;
-  PollingResourceState(this.estimatedCompletionTime);
-}
-
-/// State when to indicate the progress made on python scripts. Currently used
-/// for memo_accounts.py
-class ProgressState extends ProjectState {
-  double progress;
-  ProgressState(this.progress);
+class RunProjectState extends ProjectState {
+  bool step1InProgress;
+  bool step2InProgress;
+  bool step3InProgress;
+  bool jobDone;
+  RunProjectState(
+      {this.step1InProgress = false,
+      this.step2InProgress = false,
+      this.step3InProgress = false,
+      this.jobDone = false});
 }
 
 class JobCompleteState extends ProjectState {}
 
-/// Triggers a error dialogue to the user.
-/// [error] - message to be displayed
-/// [isMajor] - true yields a pop up window. False, a snack bar
 class ProjectErrorState extends ProjectState {
   final Object error;
   final bool isMajor;

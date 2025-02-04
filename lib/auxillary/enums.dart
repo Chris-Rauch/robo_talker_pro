@@ -1,6 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
-enum ProjectType { latePayment, returnMail }
+enum ProjectType { latePayment, returnMail, collections }
 
 enum RequestType { multiJobPost, jobDetails, login, config }
 
