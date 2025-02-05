@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:robo_talker_pro/views/main_view/account_view.dart';
-import 'package:robo_talker_pro/views/main_view/no_call_agreement_view.dart';
-import 'package:robo_talker_pro/views/main_view/project_view.dart';
-import 'package:robo_talker_pro/views/main_view/settings_view.dart';
+import 'package:robo_talker_pro/views/account_views/account_view.dart';
+import 'package:robo_talker_pro/views/no_call_agreement/no_call_agreement_view.dart';
+import 'package:robo_talker_pro/views/project_views/project_view.dart';
+import 'package:robo_talker_pro/views/settings/settings_view.dart';
 
 class MainView extends StatefulWidget {
   const MainView({super.key});

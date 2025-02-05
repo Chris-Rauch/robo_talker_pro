@@ -15,7 +15,7 @@ void showSnackBarAfterBuild(BuildContext context, Object error) {
     content: Text(error.toString()),
     backgroundColor: Colors.red,
     duration:
-        const Duration(seconds: 5), // Duration the SnackBar should be visible
+        const Duration(seconds: 10), // Duration the SnackBar should be visible
   );
 
   SchedulerBinding.instance.addPostFrameCallback((_) {

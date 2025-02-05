@@ -1,12 +1,11 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
+import 'package:robo_talker_pro/auxillary/file_pickers.dart';
 import 'package:robo_talker_pro/services/projectBloc/project_bloc.dart';
 import 'package:robo_talker_pro/services/projectBloc/project_event.dart';
 import 'package:robo_talker_pro/services/projectBloc/project_state.dart';
-import 'package:path/path.dart' as p;
 
 class SelectProjectDataView extends StatefulWidget {
   final ProjectType type;
@@ -47,22 +46,37 @@ class SelectDataState extends State<SelectProjectDataView> {
   }
 
   Widget _buildFileSelectors(BuildContext context) {
+    String fileText = "";
+    if (widget.type == ProjectType.latePayment) {
+      fileText = "Late Payment";
+    } else if (widget.type == ProjectType.returnMail) {
+      fileText = "Return Mail";
+    } else if (widget.type == ProjectType.collections) {
+      fileText = "Collections";
+    }
     return Expanded(
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Files',
-              style: TextStyle(fontSize: 30),
+            Text(
+              '$fileText File',
+              style: const TextStyle(fontSize: 30),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             Center(
-              child: ElevatedButton(
-                onPressed: () => _selectFile(context),
-                child: const Text('Select File'),
+              child: Tooltip(
+                message:
+                    "Leave this blank and it will be automatically downloaded",
+                child: ElevatedButton(
+                  onPressed: () async {
+                    _filePath.text = await selectFile();
+                    setState(() {});
+                  },
+                  child: const Text('Select File'),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -72,12 +86,15 @@ class SelectDataState extends State<SelectProjectDataView> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-            Center(
-              child: ElevatedButton(
-                onPressed: () => _selectFolder(context),
-                child: const Text('Select Folder'),
+            if (widget.type == ProjectType.latePayment)
+              Center(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    _folderPath.text = await selectFolder("");
+                  },
+                  child: const Text('Select Folder'),
+                ),
               ),
-            ),
             const SizedBox(height: 16),
             Text(
               _folderPath.text,
@@ -143,13 +160,12 @@ class SelectDataState extends State<SelectProjectDataView> {
 
   Widget _buildNavButtons(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
         ElevatedButton(
           onPressed: () {
             final projBloc = BlocProvider.of<ProjectBloc>(context);
             if (projBloc.state is SelectProjectDataState) {
-              final state = projBloc.state as SelectProjectDataState;
               _goNext(
                 context,
                 StartProjectEvent(
@@ -166,34 +182,6 @@ class SelectDataState extends State<SelectProjectDataView> {
         ),
       ],
     );
-  }
-
-  Future<void> _selectFile(BuildContext context) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      allowMultiple: false,
-      type: FileType.custom,
-      allowedExtensions: ['xlsx'],
-    );
-
-    if ((result != null) && (result.files.single.path != null)) {
-      setState(() {
-        _filePath.text = result.files.single.path ?? "";
-      });
-    }
-  }
-
-  Future<void> _selectFolder(BuildContext context) async {
-    String? dirPath = await FilePicker.platform.getDirectoryPath(
-      dialogTitle: "Select a Folder",
-      lockParentWindow: false,
-      initialDirectory: p.dirname(_filePath.text),
-    );
-
-    if (dirPath != null) {
-      setState(() {
-        _folderPath.text = dirPath;
-      });
-    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -239,5 +227,17 @@ class SelectDataState extends State<SelectProjectDataView> {
 
   void _goNext(BuildContext context, ProjectEvent event) {
     context.read<ProjectBloc>().add(event);
+  }
+}
+
+class FilePickerManager extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener(
+      listener: ((context, state) {
+        if (true) {
+
+        }
+    }));
   }
 }

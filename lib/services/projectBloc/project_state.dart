@@ -41,3 +41,5 @@ class ProjectErrorState extends ProjectState {
   final bool isMajor;
   ProjectErrorState(this.error, {this.isMajor = false});
 }
+
+class ShowFilePicker extends ProjectState {}

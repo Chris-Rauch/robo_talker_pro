@@ -39,6 +39,11 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           }
         });
 
+        pythonScript.stderr.transform(utf8.decoder).listen((data) {
+          if (data.contains("File Input")) {
+            emit(ShowFilePicker());
+          }
+        });
         await pythonScript.exitCode;
         emit(RunProjectState());
       } catch (e) {
