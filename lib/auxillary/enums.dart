@@ -28,7 +28,8 @@ enum Keys {
   software_version,
   memo_path,
   request_path,
-  get_path
+  get_path,
+  collections_path
 }
 
 extension KeyExtension on Keys {

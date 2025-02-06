@@ -17,6 +17,7 @@ class SettingsViewState extends State<SettingsView> {
   final _memoPathController = TextEditingController();
   final _requestPathController = TextEditingController();
   final _getPathController = TextEditingController();
+  final _collectionsController = TextEditingController();
   String version = '';
 
   @override
@@ -34,6 +35,7 @@ class SettingsViewState extends State<SettingsView> {
             _memoPathController.text = state.memoPath ?? '';
             _requestPathController.text = state.requestPath ?? '';
             _getPathController.text = state.getPath ?? '';
+            _collectionsController.text = state.collectionsPath ?? '';
             return _settingsView(context, state.version);
           } else if (state is LoadingSettingsState) {
             return const Center(child: CircularProgressIndicator());
@@ -61,6 +63,7 @@ class SettingsViewState extends State<SettingsView> {
                   version ?? 'Could not resolve version number'),
               const SizedBox(height: 20),
               _buildSectionHeader("Paths"),
+              /*
               Row(
                 children: [
                   Expanded(
@@ -79,7 +82,7 @@ class SettingsViewState extends State<SettingsView> {
                     child: const Text('Select Path'),
                   ),
                 ],
-              ),
+              ),*/
               Row(
                 children: [
                   Expanded(
@@ -132,6 +135,24 @@ class SettingsViewState extends State<SettingsView> {
                     onPressed: () => context
                         .read<SettingsBloc>()
                         .add(SelectFileEvent(Keys.get_path)),
+                    child: const Text('Select Path'),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _collectionsController,
+                      decoration: const InputDecoration(
+                        hintText: 'Collections Script',
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => context
+                        .read<SettingsBloc>()
+                        .add(SelectFileEvent(Keys.collections_path)),
                     child: const Text('Select Path'),
                   ),
                 ],

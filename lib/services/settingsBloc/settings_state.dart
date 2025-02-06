@@ -6,7 +6,9 @@ class ViewSettingsState extends SettingsState {
   String? memoPath;
   String? requestPath;
   String? getPath;
-  ViewSettingsState(this.version, this.chromePath, this.memoPath, this.requestPath, this.getPath);
+  String? collectionsPath;
+  ViewSettingsState(this.version, this.chromePath, this.memoPath,
+      this.requestPath, this.getPath, this.collectionsPath);
 }
 
 class ErrorState extends SettingsState {

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/services/settingsBloc/settings_event.dart';
 import 'package:robo_talker_pro/services/settingsBloc/settings_state.dart';
@@ -23,6 +24,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
             await services.memoPath,
             await services.requestPath,
             await services.getPath,
+            await services.collectionsPath
           ),
         );
       } catch (e) {
@@ -42,6 +44,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
               await services.memoPath,
               await services.requestPath,
               await services.getPath,
+              await services.collectionsPath
             ),
           );
         } catch (e) {
@@ -78,6 +81,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
             case Keys.get_path:
               await services.setGetPath(val);
               break;
+            case Keys.collections_path:
+              await services.setCollectionsPath(val);
+              break;
             default:
           }
 
@@ -89,6 +95,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
               await services.memoPath,
               await services.requestPath,
               await services.getPath,
+              await services.collectionsPath
             ),
           );
         } catch (e) {

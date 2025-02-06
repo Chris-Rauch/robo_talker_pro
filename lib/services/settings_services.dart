@@ -8,6 +8,7 @@ class SettingsServices {
   String? _memoPath;
   String? _requestPath;
   String? _getPath;
+  String? _collectionsPath;
 
   // getters
   Future<String?> get version async {
@@ -37,6 +38,11 @@ class SettingsServices {
     return _getPath;
   }
 
+  Future<String?> get collectionsPath async {
+    _collectionsPath ??= await load(Keys.collections_path.name);
+    return _collectionsPath;
+  }
+
   // setters
   Future<void> setVersion(String? version) async {
     await save(Keys.software_version.name, version);
@@ -63,6 +69,11 @@ class SettingsServices {
     _getPath = getPath;
   }
 
+  Future<void> setCollectionsPath(String? collectionsPath) async {
+    await save(Keys.collections_path.name, collectionsPath);
+    _collectionsPath = collectionsPath;
+  }
+
   /// Description: Attempts to fetch data that is outside the stack of this
   ///   program. This data is necessary to run powershell and python HTTP
   ///   scripts. Data is also displayed to the user in SettingsView.
@@ -81,6 +92,7 @@ class SettingsServices {
     await memoPath;
     await requestPath;
     await getPath;
+    await collectionsPath;
   }
 
   /// Desription: Searches for a path to the chrome exe. It looks recursively
