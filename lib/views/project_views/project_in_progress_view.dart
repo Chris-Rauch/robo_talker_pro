@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 class ProgressView extends StatefulWidget {
-  const ProgressView(this.step1InProgress, this.step2InProgress,
-      this.step3InProgress, this.jobCompleted,
+  const ProgressView(this.step1InProgress, this.step2InProgress, this.step3InProgress,
+      this.jobCompleted,
       {super.key});
   final bool step3InProgress;
   final bool step2InProgress;
@@ -51,7 +51,7 @@ class _ProgressViewState extends State<ProgressView>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Collection Calls'),
+        title: const Text('Job Progress'),
       ),
       floatingActionButton: FloatingActionButton(
           child: const Text('Cancel'), onPressed: () => {}),
@@ -59,11 +59,11 @@ class _ProgressViewState extends State<ProgressView>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildLoadingColumn('Grabbing Collections Report',
+            _buildLoadingColumn('Checking System Requirements',
                 widget.step1InProgress, widget.step2InProgress),
             const SizedBox(width: 150),
-            _buildLoadingColumn('Scheduling with RoboTalker',
-                widget.step2InProgress, widget.step3InProgress),
+            _buildLoadingColumn('Waiting on RoboTalker', widget.step2InProgress,
+                widget.step3InProgress),
             const SizedBox(width: 150),
             _buildLoadingColumn('Memo\'ing Accounts', widget.step3InProgress,
                 widget.jobCompleted),

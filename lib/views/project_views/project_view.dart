@@ -21,26 +21,25 @@ class ProjectView extends StatelessWidget {
         if (state is ProjectErrorState) {
           showSnackBarAfterBuild(context, state.error);
         } else if (state is ShowFilePicker) {
-          String filePath = "";
-          Future.microtask(() async {
-            filePath = await selectFile();
-          });
-          stdout.write(filePath);
+          String filePath;
+          filePath = await selectFile();
+
+          state.p.stdin.writeln("$filePath");
         }
       },
       buildWhen: (previous, current) {
-        return current is! ShowFilePicker;
+        return current is! ShowFilePicker && current is! ProjectErrorState;
       },
       builder: (context, state) {
         if (state is SelectProjectState) {
           return const SelectProjectView();
         } else if (state is SelectProjectDataState) {
           return SelectProjectDataView(type: state.type);
-        } else if (state is JobCompleteState) {
-          return _finishedProjectUI(context);
         } else if (state is RunProjectState) {
           return ProgressView(state.step1InProgress, state.step2InProgress,
               state.step3InProgress, state.jobDone);
+        } else if (state is JobCompleteState) {
+          return _finishedProjectUI(context, state.exitCode);
         } else {
           return const ErrorWidgetDisplay(message: 'Unknown State');
         }
@@ -48,15 +47,17 @@ class ProjectView extends StatelessWidget {
     );
   }
 
-
   // === UI Elements ===========================================================
   // ==========================================================================
 
-  Widget _finishedProjectUI(BuildContext context) {
-    return const Center(
+  Widget _finishedProjectUI(BuildContext context, int exitCode) {
+    String successMsg = "Job Finished. You may now exit the application";
+    String failedMsg = "Something went wrong. Application finished with exit code: $exitCode";
+    String message = (exitCode == 0) ? successMsg : failedMsg;
+    return Center(
       child: Text(
-        'All done!',
-        style: TextStyle(fontSize: 18),
+        message,
+        style: const TextStyle(fontSize: 18),
         textAlign: TextAlign.center,
       ),
     );

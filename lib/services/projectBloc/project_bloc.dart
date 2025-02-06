@@ -6,48 +6,40 @@ import 'package:bloc/bloc.dart';
 
 class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
   ProjectBloc() : super(SelectProjectState()) {
-    on<InitializeProjectEvent>((event, emit) {
-      // pop up indicating lost progress
-      // reset .project.json data
-      emit(SelectProjectState());
-    });
-
     on<ProjectSelectedEvent>((event, emit) {
       emit(SelectProjectDataState(event.projectType));
     });
 
-    /// All necessary information has been received. Make HTTP request
     on<StartProjectEvent>((event, emit) async {
-      print(
-          'Starting project with ${event.type}, ${event.filePath}, ${event.startTime}, ${event.endTime}');
-
       try {
         var pythonScript = await Process.start('python',
             ['C:\\Users\\rauch\\Projects\\flutter_ui_testing\\test.py']);
         // Listen to the stdout stream
 
         pythonScript.stdout.transform(utf8.decoder).listen((data) {
-          print('Hello there! Here\'s the data: $data');
-          if (data.contains('Grabbing Collections Report')) {
+          if (data == 'Checking system requirements') {
             emit(RunProjectState(step1InProgress: true));
-          } else if (data.contains('Scheduling job with RoboTalker')) {
+          } else if (data == 'Waiting on the calls') {
             emit(RunProjectState(step2InProgress: true));
-          } else if (data.contains('Memo\'ing accounts')) {
+          } else if (data == 'Memo\'ing accounts') {
             emit(RunProjectState(step3InProgress: true));
-          } else if (data.contains('Done')) {
-            emit(RunProjectState(step3InProgress: true));
+          } else if (data == 'Done') {
+            emit(RunProjectState(jobDone: true));
           }
         });
 
         pythonScript.stderr.transform(utf8.decoder).listen((data) {
-          if (data.contains("File Input")) {
-            emit(ShowFilePicker());
+          if (data.contains("Need collections report")) {
+            emit(ShowFilePicker(pythonScript));
+          } else {
+            emit(ProjectErrorState("Python wrote to stderr: $data",
+                isMajor: true));
           }
         });
-        await pythonScript.exitCode;
-        emit(RunProjectState());
+        final code = await pythonScript.exitCode;
+        emit(JobCompleteState(exitCode: code));
       } catch (e) {
-        print(e);
+        emit(ProjectErrorState("Error caught in ProjectBloc", isMajor: true));
       }
     });
   }

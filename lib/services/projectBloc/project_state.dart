@@ -9,9 +9,9 @@
 /// as well as to handle potential errors during these operations.
 library project_state_bloc;
 
-import 'package:robo_talker_pro/auxillary/enums.dart';
+import 'dart:io';
 
-//import 'package:robo_talker_pro/auxillary/enums.dart';
+import 'package:robo_talker_pro/auxillary/enums.dart';
 
 abstract class ProjectState {}
 
@@ -34,7 +34,10 @@ class RunProjectState extends ProjectState {
       this.jobDone = false});
 }
 
-class JobCompleteState extends ProjectState {}
+class JobCompleteState extends ProjectState {
+  final int exitCode;
+  JobCompleteState({required this.exitCode});
+}
 
 class ProjectErrorState extends ProjectState {
   final Object error;
@@ -42,4 +45,7 @@ class ProjectErrorState extends ProjectState {
   ProjectErrorState(this.error, {this.isMajor = false});
 }
 
-class ShowFilePicker extends ProjectState {}
+class ShowFilePicker extends ProjectState {
+  final Process p;
+  ShowFilePicker(this.p);
+}
