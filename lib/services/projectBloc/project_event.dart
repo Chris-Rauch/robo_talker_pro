@@ -19,13 +19,14 @@ class ProjectSelectedEvent extends ProjectEvent {
 }
 
 // Emitted when the user selects both a file and directory
+/*
 class FilePathSelectedEvent extends ProjectEvent {
   final String? filePath;
   final String? folderPath;
   final ProjectType projectType;
   const FilePathSelectedEvent(this.filePath, this.folderPath, this.projectType);
 }
-
+*/
 // Emmited after user provides job information
 class StartProjectEvent extends ProjectEvent {
   final ProjectType type;
@@ -40,5 +41,7 @@ class StartProjectEvent extends ProjectEvent {
       required this.startTime,
       required this.endTime});
 }
+
+class StartOverEvent extends ProjectEvent {}
 
 class LoadingEvent extends ProjectEvent {}

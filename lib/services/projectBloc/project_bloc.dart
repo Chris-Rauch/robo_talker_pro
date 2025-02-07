@@ -15,9 +15,12 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     });
 
     on<StartProjectEvent>((event, emit) async {
+      String errorMsg='';
+      int exitCode;
       try {
         String? scriptPath = await loadData(Keys.collections_path.name);
-        String dataPath = p.join((await getApplicationSupportDirectory()).path,"preferences.json");
+        String dataPath = p.join(
+            (await getApplicationSupportDirectory()).path, "preferences.json");
         String start = event.startTime.toIso8601String();
         String end = event.endTime.toIso8601String();
         String projectPath = event.filePath;
@@ -40,6 +43,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
             emit(RunProjectState(step3InProgress: true));
           } else if (data == 'Done') {
             emit(RunProjectState(jobDone: true));
+          } else {
+            print(data); //for debugging
           }
         });
 
@@ -47,17 +52,20 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           if (data.contains("Need collections report")) {
             emit(ShowFilePicker(pythonScript));
           } else {
-            emit(ProjectErrorState("Python wrote to stderr: $data",
-                isMajor: true));
+            errorMsg += data;
           }
         });
-        final code = await pythonScript.exitCode;
-        emit(JobCompleteState(exitCode: code));
+        exitCode = await pythonScript.exitCode;
+        emit(JobCompleteState(exitCode: exitCode));
+        if (exitCode != 0) {
+          throw Exception(errorMsg);
+        }
       } catch (e) {
-        emit(ProjectErrorState("Error caught in ProjectBloc: ${e.toString()}",
-            isMajor: true));
+        emit(ProjectErrorState(e.toString(), isMajor: true));
       }
     });
+
+    on<StartOverEvent>(((event, emit) => emit(SelectProjectState())));
   }
 }
 

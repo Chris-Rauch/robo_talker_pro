@@ -6,7 +6,7 @@ Future<String> selectFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
       type: FileType.custom,
-      allowedExtensions: ['xlsx'],
+      allowedExtensions: ['xlsx', 'xls'],
     );
 
     if ((result != null) && (result.files.single.path != null)) {

@@ -3,10 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:robo_talker_pro/auxillary/error_popup.dart';
 import 'package:robo_talker_pro/auxillary/file_pickers.dart';
 import 'package:robo_talker_pro/services/projectBloc/project_bloc.dart';
+import 'package:robo_talker_pro/services/projectBloc/project_event.dart';
 import 'package:robo_talker_pro/services/projectBloc/project_state.dart';
 import 'package:robo_talker_pro/views/project_views/project_in_progress_view.dart';
 import 'package:robo_talker_pro/views/project_views/select_project_data_view.dart';
 import 'package:robo_talker_pro/views/project_views/select_project_view.dart';
+import 'package:robo_talker_pro/views/widgets/button.dart';
 import 'package:robo_talker_pro/views/widgets/error.dart';
 
 class ProjectView extends StatelessWidget {
@@ -39,7 +41,8 @@ class ProjectView extends StatelessWidget {
               state.step3InProgress, state.jobDone);
         } else if (state is JobCompleteState) {
           return _finishedProjectUI(context, state.exitCode);
-        } else {
+        }  
+        else {
           return const ErrorWidgetDisplay(message: 'Unknown State');
         }
       },
@@ -54,12 +57,24 @@ class ProjectView extends StatelessWidget {
     String failedMsg =
         "Something went wrong. Application finished with exit code: $exitCode";
     String message = (exitCode == 0) ? successMsg : failedMsg;
-    return Center(
-      child: Text(
-        message,
-        style: const TextStyle(fontSize: 18),
-        textAlign: TextAlign.center,
-      ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Center(
+          child: Text(
+            message,
+            style: const TextStyle(fontSize: 18),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        Center(
+          child: buildButton(text: "Start new project", onPressed: () => {
+                      context.read<ProjectBloc>().add(
+                           StartOverEvent())
+          }),
+        )
+      ],
     );
   }
 }
