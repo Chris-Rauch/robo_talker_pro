@@ -1,13 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:js_interop';
 import 'package:path_provider/path_provider.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
-
 import 'project_event.dart';
 import 'project_state.dart';
 import 'package:bloc/bloc.dart';
+import 'package:path/path.dart' as p;
 
 class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
   ProjectBloc() : super(SelectProjectState()) {
@@ -18,7 +17,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     on<StartProjectEvent>((event, emit) async {
       try {
         String? scriptPath = await loadData(Keys.collections_path.name);
-        String dataPath = (await getApplicationSupportDirectory()).path;
+        String dataPath = p.join((await getApplicationSupportDirectory()).path,"preferences.json");
         String start = event.startTime.toIso8601String();
         String end = event.endTime.toIso8601String();
         String projectPath = event.filePath;

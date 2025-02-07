@@ -8,7 +8,6 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
-String saveDataPath = '';
 
 // Save data to a file
 Future<void> saveData(String key, dynamic data, {String? path}) async {

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:robo_talker_pro/auxillary/error_popup.dart';
@@ -19,12 +17,13 @@ class ProjectView extends StatelessWidget {
     return BlocConsumer<ProjectBloc, ProjectState>(
       listener: (context, state) async {
         if (state is ProjectErrorState) {
-          showSnackBarAfterBuild(context, state.error);
+          //showSnackBarAfterBuild(context, state.error);
+          showErrorPopup(context, state.error.toString());
         } else if (state is ShowFilePicker) {
           String filePath;
           filePath = await selectFile();
 
-          state.p.stdin.writeln("$filePath");
+          state.p.stdin.writeln(filePath);
         }
       },
       buildWhen: (previous, current) {
@@ -52,7 +51,8 @@ class ProjectView extends StatelessWidget {
 
   Widget _finishedProjectUI(BuildContext context, int exitCode) {
     String successMsg = "Job Finished. You may now exit the application";
-    String failedMsg = "Something went wrong. Application finished with exit code: $exitCode";
+    String failedMsg =
+        "Something went wrong. Application finished with exit code: $exitCode";
     String message = (exitCode == 0) ? successMsg : failedMsg;
     return Center(
       child: Text(

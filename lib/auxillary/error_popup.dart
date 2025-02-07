@@ -22,3 +22,24 @@ void showSnackBarAfterBuild(BuildContext context, Object error) {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   });
 }
+
+void showErrorPopup(BuildContext context, String errorMessage) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text("Error", style: TextStyle(color: Colors.red)),
+        content: Text(errorMessage),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: const Text("OK"),
+          ),
+        ],
+      );
+    },
+  );
+}
+
