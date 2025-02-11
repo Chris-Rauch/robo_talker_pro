@@ -29,7 +29,8 @@ enum Keys {
   memo_path,
   request_path,
   get_path,
-  collections_path
+  collections_path,
+  python_path
 }
 
 extension KeyExtension on Keys {

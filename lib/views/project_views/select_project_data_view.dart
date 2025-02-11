@@ -22,6 +22,10 @@ class SelectDataState extends State<SelectProjectDataView> {
       DateTime.now().year, DateTime.now().month, DateTime.now().day, 12, 15);
   DateTime _stopDate = DateTime(
       DateTime.now().year, DateTime.now().month, DateTime.now().day, 12, 30);
+  DateTime _download_from = DateTime(
+      DateTime.now().year, DateTime.now().month, DateTime.now().day - 7);
+  DateTime _download_to = DateTime(
+      DateTime.now().year, DateTime.now().month, DateTime.now().day - 7);
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +89,52 @@ class SelectDataState extends State<SelectProjectDataView> {
               style: const TextStyle(fontSize: 18),
               textAlign: TextAlign.center,
             ),
+            if (widget.type == ProjectType.latePayment)
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                          'Date: ${DateFormat('EEE, M/d/y').format(_download_from)}'),
+                      const SizedBox(width: 32),
+                      ElevatedButton(
+                        onPressed: () async {
+                          DateTime? date = await _selectDownloadDate(context);
+                          if (date != null) {
+                            setState(() {
+                              _download_from = date;
+                            });
+                          }
+                        },
+                        child: const Text("Select Date"),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                          'Date: ${DateFormat('EEE, M/d/y').format(_download_to)}'),
+                      const SizedBox(width: 32),
+                      ElevatedButton(
+                        onPressed: () async {
+                          DateTime? date = await _selectDownloadDate(context);
+                          if (date != null) {
+                            setState(() {
+                              _download_to = date;
+                            });
+                          }
+                        },
+                        child: const Text("Select Date"),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            /*
             const SizedBox(height: 8),
             if (widget.type == ProjectType.latePayment)
               Center(
@@ -101,6 +151,7 @@ class SelectDataState extends State<SelectProjectDataView> {
               style: const TextStyle(fontSize: 18),
               textAlign: TextAlign.center,
             ),
+            */
           ],
         ),
       ),
@@ -166,6 +217,14 @@ class SelectDataState extends State<SelectProjectDataView> {
           onPressed: () {
             final projBloc = BlocProvider.of<ProjectBloc>(context);
             if (projBloc.state is SelectProjectDataState) {
+              DateTime? to;
+              DateTime? from;
+
+              // if the project is late payment then pass non-null values to event
+              if(widget.type == ProjectType.latePayment) {
+                  from = _download_from;
+                  to = _download_to;
+              }
               _goNext(
                 context,
                 StartProjectEvent(
@@ -174,6 +233,8 @@ class SelectDataState extends State<SelectProjectDataView> {
                   folderPath: _folderPath.text,
                   startTime: _startDate,
                   endTime: _stopDate,
+                  downloadFrom: from,
+                  downloadTo: to
                 ),
               );
             }
@@ -228,16 +289,24 @@ class SelectDataState extends State<SelectProjectDataView> {
   void _goNext(BuildContext context, ProjectEvent event) {
     context.read<ProjectBloc>().add(event);
   }
+
+  // Date selector for download file
+  Future<DateTime?> _selectDownloadDate(BuildContext context) async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _startDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+    return pickedDate;
+  }
 }
 
 class FilePickerManager extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return BlocListener(
-      listener: ((context, state) {
-        if (true) {
-
-        }
+    return BlocListener(listener: ((context, state) {
+      if (true) {}
     }));
   }
 }

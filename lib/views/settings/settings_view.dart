@@ -18,6 +18,7 @@ class SettingsViewState extends State<SettingsView> {
   final _requestPathController = TextEditingController();
   final _getPathController = TextEditingController();
   final _collectionsController = TextEditingController();
+  final _pythonController = TextEditingController();
   String version = '';
 
   @override
@@ -36,6 +37,7 @@ class SettingsViewState extends State<SettingsView> {
             _requestPathController.text = state.requestPath ?? '';
             _getPathController.text = state.getPath ?? '';
             _collectionsController.text = state.collectionsPath ?? '';
+            _pythonController.text = state.pythonPath ?? '';
             return _settingsView(context, state.version);
           } else if (state is LoadingSettingsState) {
             return const Center(child: CircularProgressIndicator());
@@ -153,6 +155,24 @@ class SettingsViewState extends State<SettingsView> {
                     onPressed: () => context
                         .read<SettingsBloc>()
                         .add(SelectFileEvent(Keys.collections_path)),
+                    child: const Text('Select Path'),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _pythonController,
+                      decoration: const InputDecoration(
+                        hintText: 'Python Script',
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => context
+                        .read<SettingsBloc>()
+                        .add(SelectFileEvent(Keys.python_path)),
                     child: const Text('Select Path'),
                   ),
                 ],

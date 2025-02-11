@@ -18,6 +18,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       String errorMsg='';
       int exitCode;
       try {
+        String python = await loadData(Keys.python_path.name);
         String? scriptPath = await loadData(Keys.collections_path.name);
         String dataPath = p.join(
             (await getApplicationSupportDirectory()).path, "preferences.json");
@@ -32,8 +33,15 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         }
         List<String> args = [scriptPath, dataPath, start, end, projectPath];
 
+        /*
+        if(event.type == ProjectType.latePayment && event.downloadFrom != null && event.downloadTo != null) {
+          args.add(event.downloadFrom!.toIso8601String());
+          args.add(event.downloadTo!.toIso8601String());
+        }
+        */
+
         // Call script and listen to stdout/stderr
-        var pythonScript = await Process.start('python', args);
+        var pythonScript = await Process.start(python, args);
         pythonScript.stdout.transform(utf8.decoder).listen((data) {
           if (data == 'Checking system requirements') {
             emit(RunProjectState(step1InProgress: true));

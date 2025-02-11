@@ -9,6 +9,7 @@ class SettingsServices {
   String? _requestPath;
   String? _getPath;
   String? _collectionsPath;
+  String? _pythonPath;
 
   // getters
   Future<String?> get version async {
@@ -42,6 +43,11 @@ class SettingsServices {
     _collectionsPath ??= await load(Keys.collections_path.name);
     return _collectionsPath;
   }
+  
+  Future<String?> get pythonPath async {
+    _pythonPath ??= await load(Keys.python_path.name);
+    return _pythonPath;
+  }
 
   // setters
   Future<void> setVersion(String? version) async {
@@ -72,6 +78,11 @@ class SettingsServices {
   Future<void> setCollectionsPath(String? collectionsPath) async {
     await save(Keys.collections_path.name, collectionsPath);
     _collectionsPath = collectionsPath;
+  }
+  
+  Future<void> setPythonPath(String? pythonPath) async {
+    await save(Keys.python_path.name, pythonPath);
+    _pythonPath = pythonPath;
   }
 
   /// Description: Attempts to fetch data that is outside the stack of this

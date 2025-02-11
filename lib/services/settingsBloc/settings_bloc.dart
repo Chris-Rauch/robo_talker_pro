@@ -23,7 +23,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
             await services.memoPath,
             await services.requestPath,
             await services.getPath,
-            await services.collectionsPath
+            await services.collectionsPath,
+            await services.pythonPath
           ),
         );
       } catch (e) {
@@ -43,7 +44,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
               await services.memoPath,
               await services.requestPath,
               await services.getPath,
-              await services.collectionsPath
+              await services.collectionsPath,
+              await services.pythonPath
             ),
           );
         } catch (e) {
@@ -94,7 +96,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
               await services.memoPath,
               await services.requestPath,
               await services.getPath,
-              await services.collectionsPath
+              await services.collectionsPath,
+              await services.pythonPath
             ),
           );
         } catch (e) {

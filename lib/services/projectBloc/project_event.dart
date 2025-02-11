@@ -34,12 +34,16 @@ class StartProjectEvent extends ProjectEvent {
   final String folderPath;
   final DateTime startTime;
   final DateTime endTime;
+  DateTime? downloadFrom;
+  DateTime? downloadTo;
   StartProjectEvent(
       {required this.type,
       required this.filePath,
       required this.folderPath,
       required this.startTime,
-      required this.endTime});
+      required this.endTime,
+      this.downloadFrom,
+      this.downloadTo});
 }
 
 class StartOverEvent extends ProjectEvent {}
