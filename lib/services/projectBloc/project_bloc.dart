@@ -18,12 +18,13 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       String errorMsg='';
       int exitCode;
       try {
-        String python = await loadData(Keys.python_path.name);
+        String? python = (await loadData(Keys.python_path.name));
         String? scriptPath = await loadData(Keys.collections_path.name);
         String dataPath = p.join(
             (await getApplicationSupportDirectory()).path, "preferences.json");
         String start = event.startTime.toIso8601String();
         String end = event.endTime.toIso8601String();
+        String projType = '';
         String projectPath = event.filePath;
 
         if (scriptPath == null) {
@@ -31,7 +32,13 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         } else if (!File(dataPath).existsSync()) {
           throw Exception("Can't find saved data file");
         }
-        List<String> args = [scriptPath, dataPath, start, end, projectPath];
+        if(event.type == ProjectType.latePayment) {
+          projType = "Late Payment";
+        } else if(event.type == ProjectType.collections) {
+          projType = "Collections";
+        }
+        python ??= "python";
+        List<String> args = [scriptPath, dataPath, start, end, projType, projectPath];
 
         /*
         if(event.type == ProjectType.latePayment && event.downloadFrom != null && event.downloadTo != null) {

@@ -62,7 +62,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           FilePickerResult? result = await FilePicker.platform.pickFiles(
             allowMultiple: false,
             type: FileType.custom,
-            allowedExtensions: ['py'],
+            allowedExtensions: ['py','exe'],
           );
           if ((result != null) && (result.files.single.path != null)) {
             val = result.files.single.path;

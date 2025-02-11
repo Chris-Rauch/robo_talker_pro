@@ -89,7 +89,7 @@ class SelectDataState extends State<SelectProjectDataView> {
               style: const TextStyle(fontSize: 18),
               textAlign: TextAlign.center,
             ),
-            if (widget.type == ProjectType.latePayment)
+            if (false /*widget.type == ProjectType.latePayment*/)
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
