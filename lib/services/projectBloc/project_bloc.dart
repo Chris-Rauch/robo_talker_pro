@@ -49,7 +49,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         });
 
         pythonScript.stderr.transform(utf8.decoder).listen((data) {
-          if (data.contains("Need collections report")) {
+          if (data.contains("File Input")) {
             emit(ShowFilePicker(pythonScript));
           } else {
             errorMsg += data;

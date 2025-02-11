@@ -24,7 +24,6 @@ class ProjectView extends StatelessWidget {
         } else if (state is ShowFilePicker) {
           String filePath;
           filePath = await selectFile();
-
           state.p.stdin.writeln(filePath);
         }
       },
