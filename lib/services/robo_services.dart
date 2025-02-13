@@ -1,3 +1,7 @@
+/*
+This logic has been moved to submodule collection_calls
+
+
 /// Robo Services is going to:
 ///   1) Handle the HTTP requests specifically for the RoboTalker website.
 ///   2) Validate user inputs
@@ -15,7 +19,6 @@ import 'package:robo_talker_pro/auxillary/constants.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 import 'package:robo_talker_pro/services/settings_services.dart';
-
 class RoboServices {
   // auth elems
   String? _userName, _zKey;
@@ -266,7 +269,7 @@ class RoboServices {
   /// - Exception('Could not locate the request path. These can be changed in the Settings Tab');
   Future<void> multiJobPost() async {
     SettingsServices settings = SettingsServices();
-    String? requestPath = await settings.requestPath;
+    String? requestPath = ''; //await settings.requestPath;
     if (requestPath == null) {
       throw Exception(
           'Could not locate the request path. These can be changed in the Settings Tab');
@@ -330,7 +333,7 @@ class RoboServices {
   /// - PathException("Can not find 'get.py' file")
   Future<bool> getJobDetails() async {
     SettingsServices settings = SettingsServices();
-    String? getPath = await settings.getPath; // path to python 'get' script
+    String? getPath = ''; //await settings.getPath; // path to python 'get' script
     DateTime now = DateTime.now();
     Duration timeToWait = (await endDateTime)!.difference(now);
     bool success = false;
@@ -408,7 +411,8 @@ class RoboServices {
   /// HTTP request 'GetJobDetails.ashx?' does not return the vars. This function
   /// is designed to append the vars to each entry in contactList.
   String _getVars(String detailedReport, String contactList) {
-    List<dynamic> report = jsonDecode(detailedReport); // TODO: ERROR -> Format exception // detaieldReport = "Response: "
+    List<dynamic> report = jsonDecode(
+        detailedReport); // TODO: ERROR -> Format exception // detaieldReport = "Response: "
     List<dynamic> contacts = jsonDecode(contactList);
     Map<String, Map<String, dynamic>> map = {
       for (var item in contacts) item['name']!: item
@@ -491,3 +495,4 @@ class RoboServices {
     return await loadData(key, path: path);
   }
 }
+*/

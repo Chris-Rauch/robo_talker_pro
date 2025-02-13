@@ -4,39 +4,14 @@ import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 
 class SettingsServices {
   String? _version;
-  String? _chromePath;
-  String? _memoPath;
-  String? _requestPath;
-  String? _getPath;
   String? _collectionsPath;
   String? _pythonPath;
 
   // getters
   Future<String?> get version async {
     _version ??= await load(Keys.software_version.name);
-    _version ??= await fetchVersionFromGitHub();
+    //_version ??= await fetchVersionFromGitHub(); // user needs git or this throws an error
     return _version;
-  }
-
-  Future<String?> get chromePath async {
-    _chromePath ??= await load(Keys.chrome_path.name);
-    _chromePath ??= await findChrome();
-    return _chromePath;
-  }
-
-  Future<String?> get memoPath async {
-    _memoPath ??= await load(Keys.memo_path.name);
-    return _memoPath;
-  }
-
-  Future<String?> get requestPath async {
-    _requestPath ??= await load(Keys.request_path.name);
-    return _requestPath;
-  }
-
-  Future<String?> get getPath async {
-    _getPath ??= await load(Keys.get_path.name);
-    return _getPath;
   }
 
   Future<String?> get collectionsPath async {
@@ -53,26 +28,6 @@ class SettingsServices {
   Future<void> setVersion(String? version) async {
     await save(Keys.software_version.name, version);
     _version = version;
-  }
-
-  Future<void> setChromePath(String? chromePath) async {
-    await save(Keys.chrome_path.name, chromePath);
-    _chromePath = chromePath;
-  }
-
-  Future<void> setMemoPath(String? memoPath) async {
-    await save(Keys.memo_path.name, memoPath);
-    _memoPath = memoPath;
-  }
-
-  Future<void> setRequestPath(String? requestPath) async {
-    await save(Keys.request_path.name, requestPath);
-    _requestPath = requestPath;
-  }
-
-  Future<void> setGetPath(String? getPath) async {
-    await save(Keys.get_path.name, _getPath);
-    _getPath = getPath;
   }
 
   Future<void> setCollectionsPath(String? collectionsPath) async {
@@ -99,48 +54,7 @@ class SettingsServices {
   Future<void> init() async {
     // load data from memory
     await version;
-    await chromePath;
-    await memoPath;
-    await requestPath;
-    await getPath;
     await collectionsPath;
-  }
-
-  /// Desription: Searches for a path to the chrome exe. It looks recursively
-  ///   starting in the Program Files directories (Windows) or the Applications
-  ///   (Mac). This path is needed for the memo.py script
-  /// Returns:
-  ///   Future<String?> - A path to the chrome executable. Null if not found.
-  Future<String?> findChrome() async {
-    String? fileName;
-    List<String> roots;
-    String? version;
-
-    if (Platform.isWindows) {
-      fileName = 'chrome.exe';
-      roots = [
-        'C:\\Program Files\\Google\\Chrome\\Application',
-        'C:\\Program Files (x86)\\Google\\Chrome\\Application'
-      ];
-    } else if (Platform.isMacOS) {
-      fileName = 'Google Chrome.app';
-      roots = ['/Applications'];
-    } else {
-      roots = [];
-    }
-
-    for (var root in roots) {
-      final dir = Directory(root);
-      if (dir.existsSync()) {
-        for (var file in dir.listSync(recursive: true, followLinks: false)) {
-          if (file is File && file.path.endsWith(fileName!)) {
-            setChromePath(file.path);
-            return file.path; // File found, return the path
-          }
-        }
-      }
-    }
-    return version; // file not found
   }
 
   /// Description: Fetches software version my GitHub repo. If found, save

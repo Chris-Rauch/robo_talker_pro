@@ -1,3 +1,7 @@
+'''
+Logic has been moved to submod collection_calls
+
+
 # Description: Script makes a REST request.
 # Input:
 #   argv[1] - method
@@ -73,3 +77,4 @@ if __name__ == "__main__":
 
     # program finished 
     sys.exit(0)
+'''

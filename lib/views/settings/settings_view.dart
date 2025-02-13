@@ -4,6 +4,7 @@ import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/services/settingsBloc/settings_bloc.dart';
 import 'package:robo_talker_pro/services/settingsBloc/settings_event.dart';
 import 'package:robo_talker_pro/services/settingsBloc/settings_state.dart';
+import 'package:robo_talker_pro/views/widgets/error.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -13,10 +14,6 @@ class SettingsView extends StatefulWidget {
 }
 
 class SettingsViewState extends State<SettingsView> {
-  final _chromePathController = TextEditingController();
-  final _memoPathController = TextEditingController();
-  final _requestPathController = TextEditingController();
-  final _getPathController = TextEditingController();
   final _collectionsController = TextEditingController();
   final _pythonController = TextEditingController();
   String version = '';
@@ -32,17 +29,15 @@ class SettingsViewState extends State<SettingsView> {
       child: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
           if (state is ViewSettingsState) {
-            _chromePathController.text = state.chromePath ?? '';
-            _memoPathController.text = state.memoPath ?? '';
-            _requestPathController.text = state.requestPath ?? '';
-            _getPathController.text = state.getPath ?? '';
             _collectionsController.text = state.collectionsPath ?? '';
             _pythonController.text = state.pythonPath ?? '';
             return _settingsView(context, state.version);
           } else if (state is LoadingSettingsState) {
             return const Center(child: CircularProgressIndicator());
+          } else if (state is ErrorState) {
+            return ErrorWidgetDisplay(message: state.e.toString());
           } else {
-            return const Scaffold();
+            return const ErrorWidgetDisplay(message: "Unknown State");
           }
         },
       ),
@@ -62,85 +57,9 @@ class SettingsViewState extends State<SettingsView> {
             children: [
               _buildSectionHeader("Software"),
               _buildSettingRow("Version", Icons.system_update_alt,
-                  version ?? 'Could not resolve version number'),
+                  "2.0.0"),
               const SizedBox(height: 20),
               _buildSectionHeader("Paths"),
-              /*
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _chromePathController,
-                      decoration: const InputDecoration(
-                        hintText: 'Chrome',
-                      ),
-                      onSubmitted: (value) {},
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => context
-                        .read<SettingsBloc>()
-                        .add(SelectFileEvent(Keys.chrome_path)),
-                    child: const Text('Select Path'),
-                  ),
-                ],
-              ),*/
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _memoPathController,
-                      decoration: const InputDecoration(
-                        hintText: 'Memo Accounts',
-                      ),
-                      onSubmitted: (value) {},
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => context
-                        .read<SettingsBloc>()
-                        .add(SelectFileEvent(Keys.memo_path)),
-                    child: const Text('Select Path'),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _requestPathController,
-                      decoration: const InputDecoration(
-                        hintText: 'HTTP request',
-                      ),
-                      onSubmitted: (value) {},
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => context
-                        .read<SettingsBloc>()
-                        .add(SelectFileEvent(Keys.request_path)),
-                    child: const Text('Select Path'),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _getPathController,
-                      decoration: const InputDecoration(
-                        hintText: 'HTTP get',
-                      ),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => context
-                        .read<SettingsBloc>()
-                        .add(SelectFileEvent(Keys.get_path)),
-                    child: const Text('Select Path'),
-                  ),
-                ],
-              ),
               Row(
                 children: [
                   Expanded(
@@ -149,6 +68,11 @@ class SettingsViewState extends State<SettingsView> {
                       decoration: const InputDecoration(
                         hintText: 'Collections Script',
                       ),
+                      onSubmitted: (value) {
+                        context
+                            .read<SettingsBloc>()
+                            .add(SaveDataEvent(Keys.collections_path, value));
+                      },
                     ),
                   ),
                   ElevatedButton(
@@ -167,6 +91,11 @@ class SettingsViewState extends State<SettingsView> {
                       decoration: const InputDecoration(
                         hintText: 'Python Script',
                       ),
+                      onSubmitted: (value) {
+                        context
+                            .read<SettingsBloc>()
+                            .add(SaveDataEvent(Keys.python_path, value));
+                      },
                     ),
                   ),
                   ElevatedButton(

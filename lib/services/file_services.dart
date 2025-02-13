@@ -1,3 +1,6 @@
+/*
+This logic has been moved to submodule collection_calls
+
 /// The FileServices class handles the Late Payment Report provided by the user.
 /// It is responsible for the following tasks:
 ///
@@ -626,3 +629,4 @@ class FileServices {
     return isEqual;
   }
 }
+*/
