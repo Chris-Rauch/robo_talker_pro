@@ -154,7 +154,7 @@ class SettingsViewState extends State<SettingsView> {
   }
 
   Future<void> _buildPopUp(BuildContext context, String messge) async {
-    final result = await showDialog(
+    showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -170,4 +170,5 @@ class SettingsViewState extends State<SettingsView> {
       },
     );
   }
+  
 }

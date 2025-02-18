@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:robo_talker_pro/auxillary/file_pickers.dart';
 import 'package:robo_talker_pro/services/settingsBloc/settings_event.dart';
@@ -59,6 +58,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     );
 
     on<CheckForUpdatesEvent>((event, emit) async {
+      /*
       Process p;
 
       if (Platform.isWindows) {
@@ -69,9 +69,11 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       } else if (Platform.isLinux) {
         p = await Process.start('google-chrome', ['--version']);
       }
+      */
     });
+    
 
-    // fetch settings data
+    // Initial event that runs when the constructor is called
     add(FetchSettingsEvent());
   }
 }

@@ -34,7 +34,6 @@ class SelectDataState extends State<SelectProjectDataView> {
   void initState() {
     super.initState();
     showDates = (widget.type == ProjectType.latePayment);
-
   }
 
   @override
@@ -223,6 +222,11 @@ class SelectDataState extends State<SelectProjectDataView> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
+        ElevatedButton(
+          onPressed: () => _goNext(context, StartOverEvent()),
+          child: const Text('Back'),
+        ),
+        const Spacer(),
         ElevatedButton(
           onPressed: () {
             final projBloc = BlocProvider.of<ProjectBloc>(context);

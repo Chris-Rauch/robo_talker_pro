@@ -43,3 +43,29 @@ void showErrorPopup(BuildContext context, String errorMessage) {
   );
 }
 
+Future<bool> showPopup(BuildContext context, String message) async {
+  return await showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text("Alert", style: TextStyle(color: Colors.red)),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(true); // Return true
+            },
+            child: const Text("OK"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(false); // Return false
+            },
+            child: const Text("Cancel"),
+          ),
+        ],
+      );
+    },
+  ) ?? false; // Default to false if dismissed
+}
+

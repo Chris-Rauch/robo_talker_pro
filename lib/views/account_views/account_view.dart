@@ -134,6 +134,8 @@ class AccountViewState extends State<AccountView> {
                       ),
                     ],
                   ),
+                  // TODO
+                  /* Need to implement these buttons
                   const SizedBox(height: 20),
                   ElevatedButton(
                     child: const Text('Buy more units'),
@@ -147,6 +149,7 @@ class AccountViewState extends State<AccountView> {
                       onPressed: () {},
                     ),
                   ),
+                  */
                 ],
               ),
             ),
@@ -183,10 +186,13 @@ class AccountViewState extends State<AccountView> {
                     ),
                   ),
                   const Spacer(),
+                  // TODO
+                  /*
                   ElevatedButton(
                     child: const Text('Change memo'),
                     onPressed: () {},
                   ),
+                  */
                 ],
               ),
             ),

@@ -77,7 +77,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           } else if (data == 'Done') {
             emit(RunProjectState(jobDone: true));
           } else {
-            print(data); //TODO for debugging
+            //print(data); for debugging
           }
         });
 

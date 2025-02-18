@@ -3,18 +3,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 class ProgressView extends StatefulWidget {
-  const ProgressView(this.step1InProgress, this.step2InProgress, this.step3InProgress,
-      this.jobCompleted,
+  const ProgressView(this.step1InProgress, this.step2InProgress,
+      this.step3InProgress, this.jobCompleted,
       {super.key});
   final bool step3InProgress;
   final bool step2InProgress;
   final bool step1InProgress;
   final bool jobCompleted;
   @override
-  _ProgressViewState createState() => _ProgressViewState();
+  ProgressViewState createState() => ProgressViewState();
 }
 
-class _ProgressViewState extends State<ProgressView>
+class ProgressViewState extends State<ProgressView>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Process _pythonScript;
@@ -53,8 +53,19 @@ class _ProgressViewState extends State<ProgressView>
       appBar: AppBar(
         title: const Text('Job Progress'),
       ),
+      /* sigkill and taskkill are not stoping the execution of the script
       floatingActionButton: FloatingActionButton(
-          child: const Text('Cancel'), onPressed: () => {}),
+        child: const Text('Cancel'),
+        onPressed: () async {
+          bool cancel = await showPopup(context,
+              'If the calls have already been scheduled then you\'ll need to cancel them on robotalker.com.\nData may be lost and the accounts won\'t be memo\'d');
+          if (cancel) {
+            bool stop = _pythonScript.kill(ProcessSignal.sigkill);
+            Process.run('taskkill', ['/F', '/PID', '${_pythonScript.pid}']);
+          }
+        },
+      ),
+      */
       body: Center(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -119,7 +130,7 @@ class _ProgressViewState extends State<ProgressView>
         'python', ['C:\\Users\\rauch\\Projects\\flutter_ui_testing\\test.py']);
     // Listen to the stdout stream
     _pythonScript.stdout.transform(utf8.decoder).listen((data) {
-      print('Hello there! Here\'s the data: $data');
+      //print('Hello there! Here\'s the data: $data');
       if (data.contains('Grabbing Collections Report')) {
       } else if (data.contains('Scheduling job with RoboTalker')) {
       } else if (data.contains('Memo\'ing accounts')) {}
