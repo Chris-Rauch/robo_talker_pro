@@ -1,3 +1,6 @@
+/// This class manages saving and loading settings data from a file.
+library settings_services;
+
 import 'dart:io';
 import 'package:robo_talker_pro/auxillary/enums.dart';
 import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
@@ -18,7 +21,7 @@ class SettingsServices {
     _collectionsPath ??= await load(Keys.collections_path.name);
     return _collectionsPath;
   }
-  
+
   Future<String?> get pythonPath async {
     _pythonPath ??= await load(Keys.python_path.name);
     return _pythonPath;
@@ -34,7 +37,7 @@ class SettingsServices {
     await save(Keys.collections_path.name, collectionsPath);
     _collectionsPath = collectionsPath;
   }
-  
+
   Future<void> setPythonPath(String? pythonPath) async {
     await save(Keys.python_path.name, pythonPath);
     _pythonPath = pythonPath;

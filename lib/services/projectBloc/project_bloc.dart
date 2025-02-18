@@ -15,7 +15,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     });
 
     on<StartProjectEvent>((event, emit) async {
-      String errorMsg='';
+      String errorMsg = '';
       int exitCode;
       try {
         String? python = (await loadData(Keys.python_path.name));
@@ -26,27 +26,45 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
         String end = event.endTime.toIso8601String();
         String projType = '';
         String projectPath = event.filePath;
+        String downloadFrom = event.downloadFrom?.toIso8601String() ?? "";
+        String downloadTo = event.downloadTo?.toIso8601String() ?? "";
 
+        // some exception handling
         if (scriptPath == null) {
           throw Exception("Cannot find project script. Is it set in settings?");
         } else if (!File(dataPath).existsSync()) {
           throw Exception("Can't find saved data file");
         }
-        if(event.type == ProjectType.latePayment) {
+
+        // assign project type
+        if (event.type == ProjectType.latePayment) {
           projType = "Late Payment";
-        } else if(event.type == ProjectType.collections) {
+        } else if (event.type == ProjectType.collections) {
           projType = "Collections";
         }
-        python ??= "python";
-        List<String> args = [scriptPath, dataPath, start, end, projType, projectPath];
 
-        /*
-        if(event.type == ProjectType.latePayment && event.downloadFrom != null && event.downloadTo != null) {
+        // create arguments for pyhton script
+        python ??= "python";
+        List<String> args = [
+          scriptPath,
+          dataPath,
+          start,
+          end,
+          projType,
+          projectPath,
+          downloadFrom,
+          downloadTo
+        ];
+
+/*
+        if (event.type == ProjectType.latePayment &&
+            event.downloadFrom != null &&
+            event.downloadTo != null &&
+            projectPath.isEmpty) {
           args.add(event.downloadFrom!.toIso8601String());
           args.add(event.downloadTo!.toIso8601String());
         }
-        */
-
+*/
         // Call script and listen to stdout/stderr
         var pythonScript = await Process.start(python, args);
         pythonScript.stdout.transform(utf8.decoder).listen((data) {
@@ -59,7 +77,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           } else if (data == 'Done') {
             emit(RunProjectState(jobDone: true));
           } else {
-            print(data); //for debugging
+            print(data); //TODO for debugging
           }
         });
 
@@ -67,7 +85,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           if (data.contains("File Input")) {
             emit(ShowFilePicker(pythonScript));
           } else {
-            errorMsg += data;
+            errorMsg = data;
           }
         });
         exitCode = await pythonScript.exitCode;

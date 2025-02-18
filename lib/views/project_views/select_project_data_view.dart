@@ -16,16 +16,26 @@ class SelectProjectDataView extends StatefulWidget {
 }
 
 class SelectDataState extends State<SelectProjectDataView> {
+  late bool showDates;
   final _filePath = TextEditingController();
   final _folderPath = TextEditingController();
   DateTime _startDate = DateTime(
       DateTime.now().year, DateTime.now().month, DateTime.now().day, 12, 15);
   DateTime _stopDate = DateTime(
       DateTime.now().year, DateTime.now().month, DateTime.now().day, 12, 30);
+  // ignore: non_constant_identifier_names
   DateTime _download_from = DateTime(
       DateTime.now().year, DateTime.now().month, DateTime.now().day - 7);
+  // ignore: non_constant_identifier_names
   DateTime _download_to = DateTime(
       DateTime.now().year, DateTime.now().month, DateTime.now().day - 7);
+
+  @override
+  void initState() {
+    super.initState();
+    showDates = (widget.type == ProjectType.latePayment);
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +49,9 @@ class SelectDataState extends State<SelectProjectDataView> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _buildFileSelectors(context),
-            const SizedBox(height: 32), // Add spacing between sections
+            const SizedBox(height: 32),
             _buildDateSelectors(context),
-            const SizedBox(height: 32), // Add spacing between sections
+            const SizedBox(height: 32),
             _buildNavButtons(context),
           ],
         ),
@@ -89,7 +99,7 @@ class SelectDataState extends State<SelectProjectDataView> {
               style: const TextStyle(fontSize: 18),
               textAlign: TextAlign.center,
             ),
-            if (false /*widget.type == ProjectType.latePayment*/)
+            if (showDates)
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -221,21 +231,20 @@ class SelectDataState extends State<SelectProjectDataView> {
               DateTime? from;
 
               // if the project is late payment then pass non-null values to event
-              if(widget.type == ProjectType.latePayment) {
-                  from = _download_from;
-                  to = _download_to;
+              if (widget.type == ProjectType.latePayment) {
+                from = _download_from;
+                to = _download_to;
               }
               _goNext(
                 context,
                 StartProjectEvent(
-                  type: widget.type,
-                  filePath: _filePath.text,
-                  folderPath: _folderPath.text,
-                  startTime: _startDate,
-                  endTime: _stopDate,
-                  downloadFrom: from,
-                  downloadTo: to
-                ),
+                    type: widget.type,
+                    filePath: _filePath.text,
+                    folderPath: _folderPath.text,
+                    startTime: _startDate,
+                    endTime: _stopDate,
+                    downloadFrom: from,
+                    downloadTo: to),
               );
             }
           },
@@ -292,21 +301,13 @@ class SelectDataState extends State<SelectProjectDataView> {
 
   // Date selector for download file
   Future<DateTime?> _selectDownloadDate(BuildContext context) async {
+    DateTime start = _startDate.subtract(const Duration(days: 14));
     DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: _startDate,
-      firstDate: DateTime.now(),
+      firstDate: start,
       lastDate: DateTime(2100),
     );
     return pickedDate;
-  }
-}
-
-class FilePickerManager extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return BlocListener(listener: ((context, state) {
-      if (true) {}
-    }));
   }
 }
