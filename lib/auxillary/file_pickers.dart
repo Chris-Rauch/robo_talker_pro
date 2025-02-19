@@ -1,12 +1,12 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 
-Future<String> selectFile() async {
+Future<String> selectFile(List<String>? extensions) async {
     String? filePath;
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
       type: FileType.custom,
-      allowedExtensions: ['xlsx', 'xls'],
+      allowedExtensions: extensions,
     );
 
     if ((result != null) && (result.files.single.path != null)) {

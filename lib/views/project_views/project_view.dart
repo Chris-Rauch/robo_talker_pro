@@ -24,7 +24,7 @@ class ProjectView extends StatelessWidget {
         } else if (state is ShowFilePicker) {
           String filePath;
           showErrorPopup(context, "Unable to download report. Please select it manually");
-          filePath = await selectFile();
+          filePath = await selectFile(["xlsx", "xls"]);
           state.p.stdin.writeln(filePath);
         }
       },

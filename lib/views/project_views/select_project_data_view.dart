@@ -85,7 +85,7 @@ class SelectDataState extends State<SelectProjectDataView> {
                     "Leave this blank and it will be automatically downloaded",
                 child: ElevatedButton(
                   onPressed: () async {
-                    _filePath.text = await selectFile();
+                    _filePath.text = await selectFile(["xlsx", "xls"]);
                     setState(() {});
                   },
                   child: const Text('Select File'),

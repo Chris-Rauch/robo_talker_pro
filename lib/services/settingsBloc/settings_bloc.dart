@@ -39,11 +39,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
 
     on<SelectFileEvent>(
       (event, emit) async {
-        emit(LoadingSettingsState());
-
         try {
           // call the File Picker Widget and save
-          String? val = await selectFile();
+          String? val = await selectFile(["py"]);
           await services.save(event.key.name, val);
 
           // emit the updated state
