@@ -31,6 +31,8 @@ class SettingsViewState extends State<SettingsView> {
           if (state is ViewSettingsState) {
             _collectionsController.text = state.collectionsPath ?? '';
             _pythonController.text = state.pythonPath ?? '';
+            //print(_collectionsController.text);
+            //print(_pythonController.text);
             return _settingsView(context, state.version);
           } else if (state is LoadingSettingsState) {
             return const Center(child: CircularProgressIndicator());
@@ -56,8 +58,7 @@ class SettingsViewState extends State<SettingsView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildSectionHeader("Software"),
-              _buildSettingRow("Version", Icons.system_update_alt,
-                  "2.0.0"),
+              _buildSettingRow("Version", Icons.system_update_alt, "2.0.0"),
               const SizedBox(height: 20),
               _buildSectionHeader("Paths"),
               Row(
@@ -76,9 +77,11 @@ class SettingsViewState extends State<SettingsView> {
                     ),
                   ),
                   ElevatedButton(
-                    onPressed: () => context
-                        .read<SettingsBloc>()
-                        .add(SelectFileEvent(Keys.collections_path)),
+                    onPressed: () {
+                      context
+                          .read<SettingsBloc>()
+                          .add(SelectFileEvent(Keys.collections_path, ['py']));
+                    },
                     child: const Text('Select Path'),
                   ),
                 ],
@@ -101,7 +104,7 @@ class SettingsViewState extends State<SettingsView> {
                   ElevatedButton(
                     onPressed: () => context
                         .read<SettingsBloc>()
-                        .add(SelectFileEvent(Keys.python_path)),
+                        .add(SelectFileEvent(Keys.python_path, ['exe'])),
                     child: const Text('Select Path'),
                   ),
                 ],
@@ -170,5 +173,4 @@ class SettingsViewState extends State<SettingsView> {
       },
     );
   }
-  
 }

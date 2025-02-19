@@ -13,8 +13,9 @@ class SaveDataEvent extends SettingsEvent {
 
 class SelectFileEvent extends SettingsEvent {
   Keys key;
-  String? path;
-  SelectFileEvent(this.key, {this.path});
+  List<String>? ext;
+  //String? path;
+  SelectFileEvent(this.key, this.ext /*, {this.path}*/);
 }
 
 class CheckForUpdatesEvent extends SettingsEvent {}

@@ -41,8 +41,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       (event, emit) async {
         try {
           // call the File Picker Widget and save
-          String? val = await selectFile(["py"]);
+          String? val = await selectFile(event.ext);
           await services.save(event.key.name, val);
+          String? a = await services.collectionsPath;
+          print(a);
 
           // emit the updated state
           emit(
@@ -69,7 +71,6 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       }
       */
     });
-    
 
     // Initial event that runs when the constructor is called
     add(FetchSettingsEvent());

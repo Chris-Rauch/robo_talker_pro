@@ -18,12 +18,12 @@ class SettingsServices {
   }
 
   Future<String?> get collectionsPath async {
-    _collectionsPath ??= await load(Keys.collections_path.name);
+    _collectionsPath = await load(Keys.collections_path.name);
     return _collectionsPath;
   }
 
   Future<String?> get pythonPath async {
-    _pythonPath ??= await load(Keys.python_path.name);
+    _pythonPath = await load(Keys.python_path.name);
     return _pythonPath;
   }
 
