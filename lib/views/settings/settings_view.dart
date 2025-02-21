@@ -31,8 +31,6 @@ class SettingsViewState extends State<SettingsView> {
           if (state is ViewSettingsState) {
             _collectionsController.text = state.collectionsPath ?? '';
             _pythonController.text = state.pythonPath ?? '';
-            //print(_collectionsController.text);
-            //print(_pythonController.text);
             return _settingsView(context, state.version);
           } else if (state is LoadingSettingsState) {
             return const Center(child: CircularProgressIndicator());

@@ -44,7 +44,6 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           String? val = await selectFile(event.ext);
           await services.save(event.key.name, val);
           String? a = await services.collectionsPath;
-          print(a);
 
           // emit the updated state
           emit(
