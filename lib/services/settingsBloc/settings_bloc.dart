@@ -1,5 +1,6 @@
-import 'package:bloc/bloc.dart';
+/*import 'package:bloc/bloc.dart';
 import 'package:robo_talker_pro/auxillary/file_pickers.dart';
+import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 import 'package:robo_talker_pro/services/settingsBloc/settings_event.dart';
 import 'package:robo_talker_pro/services/settingsBloc/settings_state.dart';
 import 'package:robo_talker_pro/services/settings_services.dart';
@@ -42,6 +43,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         try {
           // call the File Picker Widget and save
           String? val = await selectFile(event.ext);
+          saveData(key, data)
           await services.save(event.key.name, val);
           String? a = await services.collectionsPath;
 
@@ -75,3 +77,4 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     add(FetchSettingsEvent());
   }
 }
+*/

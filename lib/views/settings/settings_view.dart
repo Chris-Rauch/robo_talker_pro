@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:robo_talker_pro/auxillary/enums.dart';
-import 'package:robo_talker_pro/services/settingsBloc/settings_bloc.dart';
-import 'package:robo_talker_pro/services/settingsBloc/settings_event.dart';
-import 'package:robo_talker_pro/services/settingsBloc/settings_state.dart';
-import 'package:robo_talker_pro/views/widgets/error.dart';
+import 'package:robo_talker_pro/auxillary/file_pickers.dart';
+import 'package:robo_talker_pro/auxillary/shared_preferences.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -16,32 +13,24 @@ class SettingsView extends StatefulWidget {
 class SettingsViewState extends State<SettingsView> {
   final _collectionsController = TextEditingController();
   final _pythonController = TextEditingController();
-  String version = '';
+  String version = '2.0.0';
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    loadData(Keys.collections_path.name).then((value) {
+      _collectionsController.text = value ?? '';
+    });
+    loadData(Keys.python_path.name).then((value) {
+      _pythonController.text = value ?? '';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<SettingsBloc, SettingsState>(
-      listener: (context, state) {
-        if (state is ErrorState) {
-          _buildPopUp(context, state.e.toString());
-        }
-      },
-      child: BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, state) {
-          if (state is ViewSettingsState) {
-            _collectionsController.text = state.collectionsPath ?? '';
-            _pythonController.text = state.pythonPath ?? '';
-            return _settingsView(context, state.version);
-          } else if (state is LoadingSettingsState) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is ErrorState) {
-            return ErrorWidgetDisplay(message: state.e.toString());
-          } else {
-            return const ErrorWidgetDisplay(message: "Unknown State");
-          }
-        },
-      ),
-    );
+    return _settingsView(context, version);
   }
 
   Widget _settingsView(BuildContext context, String? version) {
@@ -67,19 +56,21 @@ class SettingsViewState extends State<SettingsView> {
                       decoration: const InputDecoration(
                         hintText: 'Collections Script',
                       ),
-                      onSubmitted: (value) {
-                        context
-                            .read<SettingsBloc>()
-                            .add(SaveDataEvent(Keys.collections_path, value));
-                      },
+                      onSubmitted: (value) async {
+                        String? val = await selectFile(["py"]);
+                        if(val.isNotEmpty) {
+                        saveData(Keys.collections_path.name, val);
+                        _collectionsController.text = val;
+                      }},
                     ),
                   ),
                   ElevatedButton(
-                    onPressed: () {
-                      context
-                          .read<SettingsBloc>()
-                          .add(SelectFileEvent(Keys.collections_path, ['py']));
-                    },
+                    onPressed: () async {
+                      String? val = await selectFile(["py"]);
+                      if(val.isNotEmpty) {
+                      saveData(Keys.collections_path.name, val);
+                      _collectionsController.text = val;
+                    }},
                     child: const Text('Select Path'),
                   ),
                 ],
@@ -92,17 +83,23 @@ class SettingsViewState extends State<SettingsView> {
                       decoration: const InputDecoration(
                         hintText: 'Python Script',
                       ),
-                      onSubmitted: (value) {
-                        context
-                            .read<SettingsBloc>()
-                            .add(SaveDataEvent(Keys.python_path, value));
+                      onSubmitted: (value) async {
+                        String? val = await selectFile(["exe"]);
+                        if (val.isNotEmpty) {
+                          saveData(Keys.python_path.name, val);
+                          _pythonController.text = val;
+                        }
                       },
                     ),
                   ),
                   ElevatedButton(
-                    onPressed: () => context
-                        .read<SettingsBloc>()
-                        .add(SelectFileEvent(Keys.python_path, ['exe'])),
+                    onPressed: () async {
+                      String? val = await selectFile(["exe"]);
+                      if (val.isNotEmpty) {
+                        saveData(Keys.python_path.name, val);
+                        _pythonController.text = val;
+                      }
+                    },
                     child: const Text('Select Path'),
                   ),
                 ],
